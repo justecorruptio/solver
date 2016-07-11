@@ -13,6 +13,7 @@ anagram = Anagram()
 
 urls = (
     '/?', 'index',
+    '/([a-zA-Z]+)/?', 'api',
 )
 app = web.application(urls, globals())
 
@@ -101,5 +102,9 @@ class index(object):
         return template % (form_q, ''.join(result_str), end_time - start_time)
 
     POST = GET
+
+class api(object):
+    def GET(self, word):
+        return '\n'.join(w for _, w in anagram.extend(word.upper())) + '\n'
 
 application = app.wsgifunc()
