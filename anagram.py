@@ -38,18 +38,17 @@ class Anagram(object):
         for j in xrange(min(len(letters) + 1, 15)):
             entries = []
             for l in combinations(letters, j):
-                entries.append((l, self.hash(''.join(l))))
+                entries.append((l, self.hash(l)))
             letter_hashes.append(entries)
 
         for i in xrange(min(len(words) + 1, 4)):
             for w in combinations(words, i):
                 combo = ''.join(w)
-                len_combo = len(combo)
-                if len_combo > 15:
+                if len(combo) > 15:
                     continue
                 words_hx = self.hash(combo)
 
-                for entries in letter_hashes[max(0, 2 - len(w)):15 - len_combo]:
+                for entries in letter_hashes[max(0, 2 - len(w)):15 - len(combo)]:
                     for l, letter_hx in entries:
                         hx = words_hx * letter_hx
                         if hx not in self.data:
@@ -88,18 +87,19 @@ def main():
     print time.time() - a
 
     a = time.time()
-    res = anagram.snatch("""
-        adjunct professor anomally detection
-        machine learning splitting heading
-        proclaim announce jinx hybrid
-        dexter corpse anneal index
-        marbling dietary genious
-        dubious apple tides marches
-        petered daffodill hungry
-        q r g k i o
-    """.upper().strip().split())
-    for combo, built in res:
-        print ' + '.join(combo), '=', built
+    for i in xrange(10):
+        res = anagram.snatch("""
+            adjunct professor anomally detection
+            machine learning splitting heading
+            proclaim announce jinx hybrid
+            dexter corpse anneal index
+            marbling dietary genious
+            dubious apple tides marches
+            petered daffodill hungry
+            q r g k i o
+        """.upper().strip().split())
+    #for combo, built in res:
+    #    print ' + '.join(combo), '=', built
     print time.time() - a
 
     '''
