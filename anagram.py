@@ -44,11 +44,12 @@ class Anagram(object):
         for i in xrange(min(len(words) + 1, 4)):
             for w in combinations(words, i):
                 combo = ''.join(w)
-                if len(combo) > 15:
+                len_combo = len(combo)
+                if len_combo > 15:
                     continue
                 words_hx = self.hash(combo)
 
-                for entries in letter_hashes[max(0, 2 - len(w)):]:
+                for entries in letter_hashes[max(0, 2 - len(w)):15 - len_combo]:
                     for l, letter_hx in entries:
                         hx = words_hx * letter_hx
                         if hx not in self.data:
@@ -80,7 +81,7 @@ class Anagram(object):
             a.remove(c)
         return tuple(a)
 
-if __name__ == '__main__':
+def main():
     import time
     a = time.time()
     anagram = Anagram()
@@ -101,8 +102,13 @@ if __name__ == '__main__':
         print ' + '.join(combo), '=', built
     print time.time() - a
 
+    '''
     a = time.time()
     res = anagram.extend('TEACH')
     for combo, built in res:
         print ' + '.join(combo), '=', built
     print time.time() - a
+    '''
+
+if __name__ == '__main__':
+    main()
