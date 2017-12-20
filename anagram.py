@@ -21,6 +21,7 @@ class Anagram(object):
             self.tiered[len(line)].setdefault(hx, []).append(line)
 
     def hash(self, letters):
+        global LETTERS_TO_PRIMES
         r = 1
         for c in letters:
             r *= LETTERS_TO_PRIMES[c]
@@ -34,12 +35,10 @@ class Anagram(object):
         letters = [w for w in words if len(w) == 1]
         words = [w for w in words if len(w) > 1]
 
-        letter_hashes = []
-        for j in xrange(min(len(letters) + 1, 15)):
-            entries = []
-            for l in combinations(letters, j):
-                entries.append((l, self.hash(l)))
-            letter_hashes.append(entries)
+        letter_hashes = [
+            [(l, self.hash(l)) for l in combinations(letters, j)]
+            for j in xrange(min(len(letters) + 1, 15))
+        ]
 
         for i in xrange(min(len(words) + 1, 4)):
             for w in combinations(words, i):
@@ -87,19 +86,18 @@ def main():
     print time.time() - a
 
     a = time.time()
-    for i in xrange(10):
-        res = anagram.snatch("""
-            adjunct professor anomally detection
-            machine learning splitting heading
-            proclaim announce jinx hybrid
-            dexter corpse anneal index
-            marbling dietary genious
-            dubious apple tides marches
-            petered daffodill hungry
-            q r g k i o
-        """.upper().strip().split())
-    #for combo, built in res:
-    #    print ' + '.join(combo), '=', built
+    res = anagram.snatch("""
+        adjunct professor anomally detection
+        machine learning splitting heading
+        proclaim announce jinx hybrid
+        dexter corpse anneal index
+        marbling dietary genious
+        dubious apple tides marches
+        petered daffodill hungry
+        q r g k i o
+    """.upper().strip().split())
+    for combo, built in res:
+        print ' + '.join(combo), '=', built
     print time.time() - a
 
     '''
