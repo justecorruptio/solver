@@ -10,15 +10,17 @@ LETTERS_TO_PRIMES = dict(zip(LETTERS, PRIMES))
 class Anagram(object):
 
     def __init__(self):
+        self.words = set()
         self.data = {}
         self.tiered = [{} for i in xrange(16)]
 
-        fh = open('twl.txt', 'r')
+        fh = open('owl3.txt', 'r')
         for line in fh:
             line = line.strip()
             hx = self.hash(line)
             self.data.setdefault(hx, []).append(line)
             self.tiered[len(line)].setdefault(hx, []).append(line)
+            self.words.add(line)
 
     def hash(self, letters):
         global LETTERS_TO_PRIMES
