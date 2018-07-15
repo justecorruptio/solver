@@ -142,7 +142,7 @@ class WikiParser(object):
 
         elif name in (
             'non-gloss definition', 'n-g', 'ngd', 'def', 'non-gloss',
-            'l', 'w', 'i', 'vern',
+            'w', 'i', 'vern',
             'unsupported', 'nowrap',
             'ipachar',
             'pedia', 'smallcaps', 'keyword',
@@ -154,6 +154,9 @@ class WikiParser(object):
 
         elif name in ('latn-def',):
             return F[2]
+
+        elif name in ('l',):
+            return F[-1]
 
         elif name == 'soplink':
             return ' '.join(F)
