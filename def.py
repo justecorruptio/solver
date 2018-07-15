@@ -74,7 +74,7 @@ class WikiParser(object):
                         title = None
                         text = ''
                         continue
-                    defi = self.parse_text(text)
+                    defi = self.parse_text(title, text)
                     if defi:
                         yield title, defi
                     #if d:
@@ -97,7 +97,115 @@ class WikiParser(object):
 
         return True
 
-    def parse_text(self, text):
+    def handle_template(self, match_obj):
+        data = match_obj.group(1)
+        if '|' not in data:
+            return data
+        parts = data.split('|')
+        if not parts:
+            return ''
+
+        name = parts.pop(0).lower().strip()
+
+        F = []
+        args = {}
+        for part in parts:
+            if '=' in part:
+                k, v = part.split('=', 1)
+                args[k] = v
+            else:
+                F.append(part)
+
+        if F:
+            L = '{_' + F[0] + '_}'
+        else:
+            L = ''
+
+        if name in (
+            'lb', 'lbl', 'label',
+            'defdate', 'senseid', 'anchor',
+            'qualifier', 'q', 'qual',
+            'cite-book', 'cite-web', 'isbn',
+            'topics', 'top',
+            '+preo', 'jump', 'gloss', 'rfex',
+            'rfc-sense', 'rfquote-sense', 'sense', 'rfc-def', 'rfdef',
+            'tcx',
+            'attention', 'syndiff',
+            'def-date', 'defdt',
+            'circa', 'c.', 'circa2', 'b.c.e.',
+            'tlb', '&lit',
+            'c',
+        ):
+            return ''
+        elif name.startswith('r:'):
+            return ''
+
+        elif name in (
+            'non-gloss definition', 'n-g', 'ngd', 'def', 'non-gloss',
+            'l', 'w', 'i', 'vern',
+            'unsupported', 'nowrap',
+            'ipachar',
+            'pedia', 'smallcaps', 'keyword',
+        ):
+            return F[0]
+
+        elif name in ('m',):
+            return F[1]
+
+        elif name in ('latn-def',):
+            return F[2]
+
+        elif name == 'soplink':
+            return ' '.join(F)
+
+        elif name == 'en-past of':
+            return 'simple past tense and past participle of ' + L
+        elif name == 'en-simple past of':
+            return 'simple past tense of ' + L
+        elif name.startswith('en-'):
+            return name[3:-3] + ' form of ' + L
+        elif name.endswith(' of'):
+            return name + ' ' + L
+        elif name in ('alt form', 'altform'):
+            return 'alternative form of ' + L
+        elif name in ('altname',):
+            return 'synonym of ' + L
+        elif name in ('short for',):
+            return 'short for ' + L
+        elif name in ('clipping',):
+            return 'clipping of ' + L
+        elif name in ('altcaps',):
+            return 'alternative letter-case form of ' + L
+        elif name in ('only used in',):
+            return 'only used in ' + L
+        elif name in ('altspell', 'standspell', 'alt-sp', 'altspelling'):
+            return 'alternative spelling of ' + L
+        elif name in ('eye dialect'):
+            return 'eye dialect spelling of ' + L
+        elif name in ('pronunciation spelling'):
+            return 'pronunciation spelling of ' + L
+
+        elif name == 'taxlink':
+            return '"' + F[0] + '"'
+        elif name in ('si-unit', 'si-unit-2', 'si-unit-np'):
+            return 'SI unit of ' + F[2]
+        elif name == 'nuclide':
+            return 'a nuclide'
+        elif name == 'frac':
+            return 'a fraction of'
+        elif name == 'chem':
+            return 'a chemical'
+        elif name == 'etyl':
+            return '@L_' + F[0] + '@'
+        elif name == 'cog':
+            return '@L_' + F[0] + '@ ' + '"' + F[1] + '"'
+
+        else:
+            pass
+
+        return ''
+
+    def parse_text(self, title, text):
         text = text.replace('\n', '@_@')
         match = re.search(r'==English==.*?@_@# (.*?)(@_@.*|$)', text)
         if not match:
@@ -129,133 +237,12 @@ class WikiParser(object):
         text = re.sub(r'\[\[[^\|\]]*?\|(.*?)\]\]', r'\1', text)
         text = re.sub(r'\[\[(.*?)\]\]', r'\1', text)
 
-        text = re.sub(r"""\{\{
-            (?:[wl])
-            (?:\|[^\|\{\}]*?)* \|([^\|\{\}]*?)
-        \}\}""", r'\1', text, flags=re.I|re.X)
+        self._curr = (title, text)
 
-        text = re.sub(r"""\{\{
-            (?:[ilm]|keyword|smallcaps|ipachar|pedia|unsupported|vern)
-            (?:\|.*?)? \|([^\|]*?)
-        \}\}""", r'\1', text, flags=re.I|re.X)
-
-        '''
-        text = re.sub(
-            r'\{\{(?:[i]|unsupported)\|(.*?)\}\}', r'\1', text,
-            flags=re.I,
-        )
-        '''
-
-        text = re.sub(r"""\{\{(?:
-            C\.|circa2
-        ).*?\}\}""", '', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            taxlink
-            \|([^\|\}]*?)(:?\|.*?)?\}\}
-        """, r'"\1"', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{(?:
-            lb|lbl|label|defdate|senseid|\+preo|anchor|topics|qualifier
-            |q|qual|attention|top|jump|tcx|rfex|Rfc-sense|altname|defdate
-            |Rfquote-sense|def-date|syndiff|defdt|Tlb|&Lit|sense|c|Rfc-def
-        )\|.*?\}\}""", '', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            (
-                [^-\|\}]*?of
-            )\s?
-            \|([^\|\}]*?) (:?\|[^\|\{\}]*?)* \}\}
-        """, r'\1 \2', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            (?:en-)?(
-                alt\sform|short\sfor|clipping|Only\sused\sin|Altcaps
-                |alt-sp|altspell|altform|Eye\sdialect|Pronunciation\sspelling|
-                [^|^}]*?of
-            )\s?
-            \|([^\|\}]*?) (:?\|[^\|\{\}]*?)* \}\}
-        """, lambda m: (
-            {
-                'alt form': 'alternate form of',
-                'altform': 'alternate form of',
-                'altcaps': 'alternate letter-case form of',
-                'past of': 'simple past tense and past participle of',
-                'simple past of': 'simple past tense of',
-                'short for': 'short for',
-                'clipping': 'Clipping of',
-                'only used in': 'Only used in',
-                'altspell': 'Alternative spelling of',
-                'alt-sp': 'Alternative spelling of',
-                'eye dialect': 'Eye dialect spelling of',
-                'pronunciation spelling': 'Pronunciation spelling of',
-                'comparative of': 'comparative form of',
-                'superlative of': 'superlative form of',
-                'third-person singular of':
-                    'third-person singular simple present indicative form of',
-            }.get(m.group(1).lower(), m.group(1)) + ' ' + m.group(2)
-        ), text, flags=re.I|re.X)
-
-
-        text = re.sub(r"""\{\{
-            si-unit(?:-2|-np)?
-            \|[^\|\}]*? \|[^\|\}]*?
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'Scientific unit of \1', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            lati?n-def
-            \|[^\|\}]*? \|[^\|\}]*?
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'\1', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            cog
-            \|([^\|\}]*?)
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'@L_\1@ "\2"', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            etyl
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'@L_\1@', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            soplink
-            \|([^\|\}]*?)
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'\1 \2', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            etyl
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'@L_\1@', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            (?:standspell|Altspelling)
-            \|[^\|\}]*?
-            \|([^\|\}]*?)
-            (:?\|.*?)?\}\}
-        """, r'alternative spelling of \1', text, flags=re.I|re.X)
-
-        # Giving up
-        text = re.sub(r"""\{\{
-            frac \|.*? \}\}
-        """, r'a fraction of', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            nuclide \|.*? \}\}
-        """, r'a nuclide', text, flags=re.I|re.X)
-
-        text = re.sub(r"""\{\{
-            chem \|.*? \}\}
-        """, r'a chemical', text, flags=re.I|re.X)
+        while re.search(r'\{\{.*\}\}', text):
+            text = re.sub(r"""\{\{
+                ([^\{\}]*)
+            \}\}""", self.handle_template, text, flags=re.I|re.X)
 
         text = re.sub(r'@L_([a-z]+)@',
             lambda m: {
@@ -266,27 +253,6 @@ class WikiParser(object):
                 'la': 'Latin',
             }.get(m.group(1), 'LANG@@@@'),
             text,
-        )
-
-        text = text.replace('{{nbsp}}', ' ')
-        text = re.sub(r'\{\{([^\|\}]+)\}\}', r'\1', text)
-
-        text = re.sub(r"""\{\{(?:
-                gloss
-            )
-            \|.*?
-            \}\}
-            """, r'', text,
-            flags=re.I|re.X,
-        )
-
-        text = re.sub(r"""\{\{(?:
-                def|Non-gloss\sdefinition|Ngd|n-g|non-gloss
-            )
-            \|(.*?)
-            \}\}
-            """, r'\1', text,
-            flags=re.I|re.X,
         )
 
         text = re.sub(r'<ref.*?</ref>', ' ', text)
@@ -300,6 +266,7 @@ class WikiParser(object):
         text = re.sub(r'\([^\(\)]*?\)', ' ', text)
         text = re.sub(r'\([^\(\)]*?\)', ' ', text)
 
+        text = re.sub(r'\(.*$', ' ', text)
 
         text = re.sub(r"''+", '', text)
         text = re.sub(r' +', ' ', text)

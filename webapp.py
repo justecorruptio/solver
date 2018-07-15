@@ -114,10 +114,7 @@ class api(object):
 
 class definition(object):
     def GET(self, word):
-        return dictionary.defs.get(
-            word.upper(),
-            'No definition found!',
-        ) + '\n'
+        return (dictionary.lookup(word.upper()) or 'No definition found!') + '\n'
 
 application = app.wsgifunc()
 
