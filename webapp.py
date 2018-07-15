@@ -4,15 +4,20 @@ import re
 import sys
 import time
 
-os.chdir(os.path.dirname(__file__))
-sys.path.append(os.path.dirname(__file__))
+abspath = os.path.abspath(os.path.dirname(__file__))
+
+os.chdir(abspath)
+sys.path.append(abspath)
 
 from anagram import Anagram
+from dictionary import Dictionary
 
 anagram = Anagram()
+dictionary = Dictionary()
 
 urls = (
     '/?', 'index',
+    '/d/([a-zA-Z]+)/?', 'definition',
     '/([a-zA-Z]+)/?', 'api',
 )
 app = web.application(urls, globals())
@@ -107,4 +112,15 @@ class api(object):
     def GET(self, word):
         return '\n'.join(w for _, w in anagram.extend(word.upper())) + '\n'
 
+class definition(object):
+    def GET(self, word):
+        return dictionary.defs.get(
+            word.upper(),
+            'No definition found!',
+        ) + '\n'
+
 application = app.wsgifunc()
+
+
+if __name__ == "__main__":
+    app.run()
