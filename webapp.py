@@ -159,6 +159,7 @@ class test(object):
     def POST(self, query):
         start_time = time.time()
         regex = re.sub(r'[-_]', '.', query)
+        regex = regex.upper().strip()
         regex = '^' + regex + '$'
 
         form = web.input(q='')
