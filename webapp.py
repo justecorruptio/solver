@@ -37,7 +37,7 @@ header = """
                 padding-top: 50px;
             }
             .mono {
-                font-family: "Lucida Console", Monaco, monospace;
+                font-family: "Menlo", "Lucida Console", Monaco, monospace;
             }
         </style>
     </head>
@@ -80,6 +80,7 @@ test_template = """
             </div>
             <div class="form-group">
             <button class="btn btn-default" type="submit">Check!</button>
+            <a class="btn btn-default" href="">Reset</a>
             </div>
         </form>
     </div>
@@ -183,6 +184,8 @@ class test(object):
 
         if not result:
             result = col('Perfect!', 'text-success')
+
+        result.append(col('%d Total' % (len(correct),)))
 
         end_time = time.time()
 
