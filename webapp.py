@@ -29,54 +29,58 @@ header = """
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" type="text/css">
         <style>
-            textarea {
+            textarea {{
                 min-height: 150px !important;
                 resize: vertical !important;
-            }
-            #small {
+            }}
+            #small {{
                 padding-top: 50px;
-            }
-            .mono {
+            }}
+            .mono {{
                 font-family: "Menlo", "Lucida Console", Monaco, monospace;
-            }
+            }}
         </style>
     </head>
     <body>
+    <div class="container-fluid">
 """
 
 footer = """
+    <div class="row" id="small"><div class="col-xs-12">
+        <small>Generated in {elapsed:0.4f} secs.<small>
+    </div></div>
+
+    </div>
     </body></html>
 """
 
 index_template = """
-    <div class="container-fluid"><div class="row">
+    <div class="row">
     <div class="col-sm-12"><h3>Anagram/Snatch Solver</h3></div>
     <div class="col-sm-12">
         <form id="qform" action="" method="post">
             <div class="form-group">
-            <textarea class="form-control" name="q" autofocus>%s</textarea>
+            <textarea class="form-control" name="q" autofocus>{form_q}</textarea>
             </div>
             <div class="form-group">
             <button class="btn btn-default" type="submit">Solve!</button>
+            <a class="btn btn-default" href="">Clear</a>
             </div>
         </form>
     </div>
 
     </div>
-    <div class="row">%s</div>
-    <div class="row" id="small"><div class="col-xs-12">
-        <small>Generated in %0.4f secs.<small>
-    </div></div>
-    </div>
+    <div class="row">{rows}</div>
+
 """
 
 test_template = """
-    <div class="container-fluid mono"><div class="row">
-    <div class="col-sm-12"><h3>Scrabble Test: %s</h3></div>
+    <div class="row mono">
+    <div class="col-sm-12"><h3>Scrabble Test: {query}</h3></div>
     <div class="col-sm-12">
         <form id="qform" action="" method="post">
             <div class="form-group">
-            <textarea class="form-control" name="q" rows="10" autofocus>%s</textarea>
+            <textarea class="form-control" name="q" rows="10" autofocus>{form_q}</textarea>
             </div>
             <div class="form-group">
             <button class="btn btn-default" type="submit">Check!</button>
@@ -86,11 +90,7 @@ test_template = """
     </div>
 
     </div>
-    <div class="row">%s</div>
-    <div class="row" id="small"><div class="col-xs-12">
-        <small>Generated in %0.4f secs.<small>
-    </div></div>
-    </div>
+    <div class="row mono">{rows}</div>
 """
 
 def col(s, klass=''):
@@ -114,7 +114,7 @@ class index(object):
 
         data = form_q.split()
         if not data or len(''.join(data)) < 4:
-            result_str = []
+            rows = []
         else:
             if len(data) == 1:
                 result = anagram.extend(data[0])
@@ -122,23 +122,26 @@ class index(object):
                 result = anagram.snatch(data)
 
             if not result:
-                result_str = [col('No Solution!')]
+                rows = [col('No Solution!')]
             else:
-                result_str = []
+                rows = []
                 for combo, built in result:
-                    result_str += [col(fmt(combo, built))]
+                    rows += [col(fmt(combo, built))]
 
         for word in data:
             if len(word) <= 1:
                 continue
-            if word not in anagram.lookup(word):
-                result_str.insert(0, col(word + ' is not a word', klass='bg-danger'))
+            if word not in anagram.words:
+                rows.insert(0, col(word + ' is not a word!', klass='bg-danger'))
+
+        if len(data) == 1 and word in anagram.words:
+                rows.insert(0, col(word + ' is word!', klass='bg-success'))
 
         end_time = time.time()
+        elapsed = end_time - start_time
+        rows = ''.join(rows)
 
-        return (header + index_template + footer) % (
-            form_q, ''.join(result_str), end_time - start_time,
-        )
+        return (header + index_template + footer).format(**locals())
 
     POST = GET
 
@@ -153,9 +156,10 @@ class definition(object):
 class test(object):
     def GET(self, query):
         regex_q = re.sub(r'[-_]', '.', query)
-        return (header + test_template + footer) % (
-            query, "", "", 0,
-        )
+        form_q = ''
+        rows = ''
+        elapsed = 0.0
+        return (header + test_template + footer).format(**locals())
 
     def POST(self, query):
         start_time = time.time()
@@ -178,25 +182,22 @@ class test(object):
         missing = [(word, True) for word in correct - data]
         extra = [(word, False) for word in data - correct]
 
-        result = []
+        rows = []
         for word, is_missing in sorted(missing + extra):
-            result.append(col(word, is_missing and 'text-info' or 'text-danger'))
+            rows.append(col(word, is_missing and 'text-info' or 'text-danger'))
 
-        if not result:
-            result = [col('Perfect!', 'text-success')]
+        if not rows:
+            rows = [col('Perfect!', 'text-success')]
 
-        result.append(col('%d Total' % (len(correct),)))
+        rows.append(col('%d Total' % (len(correct),)))
 
         end_time = time.time()
+        elapsed = end_time - start_time
+        rows = ''.join(rows)
 
-        return (header + test_template + footer) % (
-            query, form_q, ''.join(result), end_time - start_time,
-        )
-
-
+        return (header + test_template + footer).format(**locals())
 
 application = app.wsgifunc()
-
 
 if __name__ == "__main__":
     app.run()
