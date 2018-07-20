@@ -183,7 +183,7 @@ class test(object):
             result.append(col(word, is_missing and 'text-info' or 'text-danger'))
 
         if not result:
-            result = col('Perfect!', 'text-success')
+            result = [col('Perfect!', 'text-success')]
 
         result.append(col('%d Total' % (len(correct),)))
 
