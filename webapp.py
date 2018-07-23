@@ -3,8 +3,10 @@ import os
 import web
 import random
 import re
+from redis import StrictRedis
 import sys
 import time
+import uuid
 
 web.config.debug = True
 
@@ -26,6 +28,8 @@ from templates import (
     test_template,
 )
 
+redis = StrictRedis(db=1)
+
 anagram = Anagram('owl3.txt')
 dictionary = Dictionary()
 uncommon = Freq(anagram, 'uncommon.txt')
@@ -35,6 +39,7 @@ urls = (
     '/d/([a-zA-Z]+)/?', 'definition',
     '/t(?:est)?/([-a-zA-Z_]{2,3})/?', 'test',
     '/game/?', 'game',
+    '/game/scores?', 'game_scores',
     '/([a-zA-Z]+)/?', 'api',
 )
 app = web.application(urls, globals())
@@ -148,7 +153,7 @@ class test(object):
 possible_questions = set()
 for hx, words in anagram.data.iteritems():
     word = words[0]
-    if len(word) < 4 or len(word) > 7:
+    if len(word) < 5 or len(word) > 7:
         continue
     if not any(w in uncommon.ranks for w in words):
         continue
@@ -169,21 +174,32 @@ class game(object):
         return (header + game_template + footer).format(**locals())
 
     def POST(self):
-        form = web.input(curr_score=0, input='', question='', time_left=0, time_upper=0)
+        form = web.input(curr_score=0, input='', question='', time_left=0, time_upper=0, my_token='')
         question = form['question']
         inp = form['input'].upper().strip()
         curr_score = int(form['curr_score'])
         time_left = int(form['time_left'])
         time_upper = int(form['time_upper'])
+        token = form['my_token']
 
         time_unused = 1000 - (time_upper - time_left)
 
         match = re.match(r'([A-Z]+) \+ ([A-Z]+)', question)
-        if not match:
+        cheat = not match
+        if not token:
+            token = uuid.uuid4().hex
+            redis.setex('t::' + token, 600, 0)
+        else:
+            stored_score = redis.get('t::' + token)
+            if stored_score is None or int(stored_score) != curr_score:
+                cheat = True
+
+        if cheat:
             return json.dumps({
                 'question': '%s + %s = ?' % random.choice(possible_questions),
                 'score': 0,
                 'new_time_upper': 1000,
+                'token': token,
             })
 
         sub, c = match.groups()
@@ -194,14 +210,50 @@ class game(object):
         ):
             raise web.notfound()
 
+        new_score = curr_score + int([0, 1, 3, 9, 27][len(inp) - 3] * time_unused / 100)
+        redis.setex('t::' + token, 600, new_score)
+
         return json.dumps({
             'question': '%s + %s = ?' % random.choice(possible_questions),
-            'score': curr_score + int([0, 1, 3, 9, 27][len(inp) - 3] * time_unused / 100),
+            'score': new_score,
             'new_time_upper': min(2000, time_left + [0, 80, 120, 200, 500][len(inp) - 3]),
+            'token': token,
         })
+
+class game_scores(object):
+
+    def GET(self):
+        scores = redis.get('g::scores')
+        if scores is None:
+            redis.set('g::scores', '[]')
+            scores = '[]'
+        return scores
+
+    def POST(self):
+        form = web.input(my_token='', name='')
+        token = form['my_token']
+        name = form ['name']
+        name = re.sub(r'[^\w ]', '', name)
+
+        stored_score = redis.get('t::' + token)
+        if stored_score is None:
+            raise web.notfound()
+        else:
+            redis.delete('t::' + token)
+        stored_score = int(stored_score)
+
+        scores = json.loads(self.GET())
+        if not scores or scores[-1]['score'] < stored_score:
+            scores.append({'name': name, 'score': stored_score})
+            scores.sort(key=lambda x: -x['score'])
+            scores = scores[:10]
+            redis.set('g::scores', json.dumps(scores))
+
+        return json.dumps(scores)
 
 
 application = app.wsgifunc()
 
 if __name__ == "__main__":
-    app.run()
+    #app.run()
+    pass

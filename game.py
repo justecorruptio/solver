@@ -1,7 +1,7 @@
 game_template = """
     <div class="container">
         <div class="row">
-            <div class="col-sm-6">
+            <div class="col-sm-6 mt-2">
                 <h4>
                     Score:
                     <span id="curr_score" class="text-success">0</span>
@@ -11,7 +11,7 @@ game_template = """
             </div>
             <div class="col-sm-12 text-center">
                 <h2>
-                    <div id="question">Practice!</div>
+                    <div id="question">Play!</div>
                 </h2>
             </div>
             <div class="col-sm-12 mt-3 text-center">
@@ -22,6 +22,15 @@ game_template = """
                     autofocus
                 >
                 <button id="start" type="button" class="btn btn-primary">Begin!</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <h5 class="mt-3">High Scores</h5>
+                <table class="table">
+                    <tbody id="score_table">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -39,17 +48,23 @@ game_template = """
         var interval = 0;
         var curr_score = 0;
         var time_upper = time_left = 1000;
+        var my_token = '';
+
+        var $score_table = $('#score_table');
+        var high_scores = [];
 
         var query = () => {
             $.post('#', {
                 curr_score,
                 time_left,
                 time_upper,
+                my_token,
                 input: $input.val(),
                 question: $question.text(),
-            }, null, 'json').done(({score, question, new_time_upper}) => {
+            }, null, 'json').done(({score, question, new_time_upper, token}) => {
                 $curr_score.text(curr_score = score);
                 $time_left.text(time_upper = time_left = new_time_upper)
+                my_token = token,
                 $question.text(question);
                 $input.removeClass('is-invalid').addClass('is-valid');
             }).fail(() => {
@@ -57,6 +72,35 @@ game_template = """
             }).always(() => {
                 $input.val('');
                 setTimeout(() => {$input.removeClass('is-valid is-invalid');}, 1000);
+            });
+        };
+
+        var get_scores = () => {
+            return $.get('game/scores', {}, null, 'json').done((scores) => {
+                high_scores = scores;
+
+                $score_table.empty();
+                high_scores.forEach(({name, score}) => {
+                    $score_table.append($(`<tr><td>${name}</td><td>${score}</td></tr>`));
+                });
+            });
+        }
+
+        var set_scores = () => {
+            var name = window.prompt('New High Score!, Enter you name') || 'Anonymous';
+            return $.post('game/scores', {
+                name,
+                my_token,
+            }, null, 'json');
+        }
+
+        var game_end = () => {
+            get_scores().done(() => {
+                if(curr_score < high_scores[high_scores.length - 1].score) {
+                    return;
+                }
+                set_scores().done(get_scores);
+                my_token = '';
             });
         };
 
@@ -74,6 +118,7 @@ game_template = """
                     $start.show();
                     $input.hide();
                     $question.text('Game Over.');
+                    game_end();
                 }
             }, 50);
             query();
@@ -84,6 +129,10 @@ game_template = """
                 return true;
             }
             query();
+        });
+
+        $(() => {
+            get_scores();
         });
     </script>
 """.replace('{', '{{').replace('}', '}}')
