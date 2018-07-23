@@ -1,8 +1,12 @@
+import json
 import os
 import web
+import random
 import re
 import sys
 import time
+
+web.config.debug = True
 
 abspath = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,88 +14,31 @@ os.chdir(abspath)
 sys.path.append(abspath)
 
 from anagram import Anagram
+from game import game_template
 from dictionary import Dictionary
+from freq import Freq
 
-anagram = Anagram()
+from templates import (
+    header,
+    footer,
+    timed_footer,
+    index_template,
+    test_template,
+)
+
+anagram = Anagram('owl3.txt')
 dictionary = Dictionary()
+uncommon = Freq(anagram, 'uncommon.txt')
 
 urls = (
     '/?', 'index',
     '/d/([a-zA-Z]+)/?', 'definition',
     '/t(?:est)?/([-a-zA-Z_]{2,3})/?', 'test',
+    '/game/?', 'game',
     '/([a-zA-Z]+)/?', 'api',
 )
 app = web.application(urls, globals())
 
-header = """
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-        <style>
-            textarea {{
-                min-height: 150px !important;
-                resize: vertical !important;
-            }}
-            #small {{
-                padding-top: 50px;
-            }}
-            .mono {{
-                font-family: "Menlo", "Lucida Console", Monaco, monospace;
-            }}
-        </style>
-    </head>
-    <body>
-    <div class="container-fluid">
-"""
-
-footer = """
-    <div class="row" id="small"><div class="col-xs-12">
-        <small>Generated in {elapsed:0.4f} secs.<small>
-    </div></div>
-
-    </div>
-    </body></html>
-"""
-
-index_template = """
-    <div class="row">
-    <div class="col-sm-12"><h3>Anagram/Snatch Solver</h3></div>
-    <div class="col-sm-12">
-        <form id="qform" action="" method="post">
-            <div class="form-group">
-            <textarea class="form-control" name="q" autofocus>{form_q}</textarea>
-            </div>
-            <div class="form-group">
-            <button class="btn btn-default" type="submit">Solve!</button>
-            <a class="btn btn-default" href="">Clear</a>
-            </div>
-        </form>
-    </div>
-
-    </div>
-    <div class="row">{rows}</div>
-
-"""
-
-test_template = """
-    <div class="row mono">
-    <div class="col-sm-12"><h3>Scrabble Test: {query}</h3></div>
-    <div class="col-sm-12">
-        <form id="qform" action="" method="post">
-            <div class="form-group">
-            <textarea class="form-control" name="q" rows="10" autofocus>{form_q}</textarea>
-            </div>
-            <div class="form-group">
-            <button class="btn btn-default" type="submit">Check!</button>
-            <a class="btn btn-default" href="">Reset</a>
-            </div>
-        </form>
-    </div>
-
-    </div>
-    <div class="row mono">{rows}</div>
-"""
 
 def col(s, klass=''):
     return '<div class="col-xs-12 col-sm-6 col-lg-3 %s">%s</div>\n' % (klass, s)
@@ -141,7 +88,7 @@ class index(object):
         elapsed = end_time - start_time
         rows = ''.join(rows)
 
-        return (header + index_template + footer).format(**locals())
+        return (header + index_template + timed_footer).format(**locals())
 
     POST = GET
 
@@ -159,7 +106,7 @@ class test(object):
         form_q = ''
         rows = ''
         elapsed = 0.0
-        return (header + test_template + footer).format(**locals())
+        return (header + test_template + timed_footer).format(**locals())
 
     def POST(self, query):
         start_time = time.time()
@@ -195,7 +142,64 @@ class test(object):
         elapsed = end_time - start_time
         rows = ''.join(rows)
 
-        return (header + test_template + footer).format(**locals())
+        return (header + test_template + timed_footer).format(**locals())
+
+
+possible_questions = set()
+for hx, words in anagram.data.iteritems():
+    word = words[0]
+    if len(word) < 4 or len(word) > 7:
+        continue
+    if not any(w in uncommon.ranks for w in words):
+        continue
+    for i, c in enumerate(word):
+        rest = word[:i] + word[i + 1:]
+        subs = anagram.lookup(rest)
+        for sub in subs:
+            if word == sub + c:
+                continue
+            possible_questions.add((sub, c))
+possible_questions = list(possible_questions)
+
+class game(object):
+    def _gen_question(self):
+        pass
+
+    def GET(self):
+        return (header + game_template + footer).format(**locals())
+
+    def POST(self):
+        form = web.input(curr_score=0, input='', question='', time_left=0, time_upper=0)
+        question = form['question']
+        inp = form['input'].upper().strip()
+        curr_score = int(form['curr_score'])
+        time_left = int(form['time_left'])
+        time_upper = int(form['time_upper'])
+
+        time_unused = 1000 - (time_upper - time_left)
+
+        match = re.match(r'([A-Z]+) \+ ([A-Z]+)', question)
+        if not match:
+            return json.dumps({
+                'question': '%s + %s = ?' % random.choice(possible_questions),
+                'score': 0,
+                'new_time_upper': 1000,
+            })
+
+        sub, c = match.groups()
+        if not (
+            sub in anagram.words and
+            anagram.hash(sub) * anagram.hash(c) == anagram.hash(inp) and
+            inp in anagram.words
+        ):
+            raise web.notfound()
+
+        return json.dumps({
+            'question': '%s + %s = ?' % random.choice(possible_questions),
+            'score': curr_score + int([0, 1, 3, 9, 27][len(inp) - 3] * time_unused / 100),
+            'new_time_upper': min(2000, time_left + [0, 80, 120, 200, 500][len(inp) - 3]),
+        })
+
 
 application = app.wsgifunc()
 

@@ -9,12 +9,12 @@ LETTERS_TO_PRIMES = dict(zip(LETTERS, PRIMES))
 
 class Anagram(object):
 
-    def __init__(self):
+    def __init__(self, file_name):
         self.words = set()
         self.data = {}
         self.tiered = [{} for i in xrange(16)]
 
-        fh = open('owl3.txt', 'r')
+        fh = open(file_name, 'r')
         for line in fh:
             line = line.strip()
             hx = self.hash(line)
