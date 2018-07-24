@@ -40,7 +40,7 @@ urls = (
     '/t(?:est)?/([-a-zA-Z_]{2,3})/?', 'test',
     '/game/?', 'game',
     '/game/scores?', 'game_scores',
-    '/([a-zA-Z]+)/?', 'api',
+    '/([,a-zA-Z]+)/?', 'api',
 )
 app = web.application(urls, globals())
 
@@ -99,7 +99,11 @@ class index(object):
 
 class api(object):
     def GET(self, word):
-        return '\n'.join(w for _, w in anagram.extend(word.upper())) + '\n'
+        word = word.upper()
+        if ',' in word:
+            return json.dumps([w for _, w in anagram.snatch(word.split(','))])
+        else:
+            return json.dumps([w for _, w in anagram.extend(word)])
 
 class definition(object):
     def GET(self, word):

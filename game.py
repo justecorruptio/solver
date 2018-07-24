@@ -95,18 +95,23 @@ game_template = """
         }
 
         var game_end = () => {
-            get_scores().done(() => {
-                if(curr_score < high_scores[high_scores.length - 1].score) {
-                    return;
-                }
-                set_scores().done(get_scores);
-                my_token = '';
+            var [_, sub, c] = $question.text().match(/(\w+).*(\w)/);
+            $.get(sub + ',' + c, {}, null, 'json').done((result) => {
+                $question.text(sub + ' + ' + c + ' = ' + result[result.length - 1] + '. Game Over.');
+                get_scores().done(() => {
+                    if(curr_score < high_scores[high_scores.length - 1].score) {
+                        return;
+                    }
+                    set_scores().done(get_scores);
+                });
             });
         };
 
         $start.click(() => {
             curr_score = 0;
             time_left = 1000;
+            my_token = '';
+            $question.text('');
             $start.hide();
             $input.show().focus();
 
@@ -117,7 +122,6 @@ game_template = """
                     interval = 0;
                     $start.show();
                     $input.hide();
-                    $question.text('Game Over.');
                     game_end();
                 }
             }, 50);
