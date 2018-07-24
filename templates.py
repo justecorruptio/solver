@@ -39,7 +39,8 @@ index_template = """
     <div class="col-sm-12">
         <form id="qform" action="" method="post">
             <div class="form-group">
-            <textarea class="form-control" name="q" autofocus>{form_q}</textarea>
+            <textarea class="form-control text-uppercase"
+                name="q" autofocus>{form_q}</textarea>
             </div>
             <div class="form-group">
             <button class="btn btn-primary" type="submit">Solve!</button>
@@ -59,7 +60,8 @@ test_template = """
     <div class="col-sm-12">
         <form id="qform" action="" method="post">
             <div class="form-group">
-            <textarea class="form-control" name="q" rows="10" autofocus>{form_q}</textarea>
+            <textarea class="form-control text-uppercase"
+                name="q" rows="10" autofocus>{form_q}</textarea>
             </div>
             <div class="form-group">
             <button class="btn btn-primary" type="submit">Check!</button>
