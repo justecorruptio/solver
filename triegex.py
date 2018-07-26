@@ -7,12 +7,7 @@ class ConjexParser(object):
         self.pattern = pattern
 
         tree = sre_parse.parse(pattern).data
-        tree = self._clean(tree)
-
-        pprint.pprint(tree)
-
-        #self._split(tree)
-
+        self.tree = self._clean(tree)
 
     def _clean(self, tree):
         for i, (name, args) in enumerate(tree):
@@ -33,6 +28,7 @@ class ConjexParser(object):
             elif name == 'range':
                 tree[i] = ('-', chr(args[0]), chr(args[1]))
             elif name == 'negate':
+                raise NotImplemented()
                 tree[i] = ('^',)
             elif name == 'any':
                 tree[i] = ('.',)
@@ -54,33 +50,6 @@ class ConjexParser(object):
             tree.append(('&', to_and))
 
         return tree
-
-    def _split(self, tree):
-
-        def _recur(tree):
-            res = []
-
-            buff = []
-            for i, node in enumerate(tree):
-                if node == ('_', '&'):
-                    res.append(buff)
-                    buff = []
-                    continue
-
-                if node[0] == '|':
-                    for branch in node[1]:
-                        pass
-
-                buff.append(node)
-            res.append(buff)
-
-            if len(buff) >= 2:
-                del tree[:]
-                tree.append(('&', res))
-
-            return res
-
-        pprint.pprint(_recur(tree))
 
 
 class TrieNode(object):
@@ -144,25 +113,83 @@ class Trie(object):
             ptrs = next
             next = set()
 
-        return filter(None, (ptr.terminal for ptr in ptrs))
+        return sorted(filter(None, (ptr.terminal for ptr in ptrs)))
+
+    def matchex(self, conjex):
+        cj_tree = ConjexParser(conjex).tree
+
+        def _recur(in_ptr, cj):
+            ptrs = [in_ptr]
+            next = set()
+            for node in cj:
+                name = node[0]
+                if name == '_':
+                    c = node[1]
+                    for ptr in ptrs:
+                        if c in ptr.children:
+                            next.add(ptr.children[c])
+                elif name == '.':
+                    for ptr in ptrs:
+                        next.update(ptr.children.itervalues())
+                elif name == '|':
+                    for ptr in ptrs:
+                        for branch in node[1]:
+                            next.update(_recur(ptr, branch))
+                elif name == '&':
+                    for ptr in ptrs:
+                        temp = [_recur(ptr, branch) for branch in node[1]]
+                        if all(temp):
+                            for t in temp:
+                                next.update(t)
+
+                ptrs = next
+                next = set()
+
+            return ptrs
+
+        return sorted(filter(None, [ptr.terminal for ptr in _recur(self.root, cj_tree)]))
 
 
 if __name__ == '__main__':
     trie = Trie()
 
     for w in """
-        CAR CART CAT CARET CARS CATS
-        CIG CUR
+        CAD
+        CAR
+        CARD
+        CARET
+        CARS
+        CART
+        CAT
+        CATS
+        CAM
+        CAYS
+        CIG
     """.split():
         trie.add(w)
 
-    print trie
+    #print trie
 
     for patt in """
         CAR CARE CARET
         C.R
     """.split():
-        print patt, ':',  trie.match(patt)
+        #print patt, ':',  trie.match(patt)
+        pass
 
-    #cjp = ConjexParser('(AB)?|[^CDE]F')
-    cjp = ConjexParser(r'A&(B|C)')
+    #cjp = ConjexParser(r'A&BC')
+
+    for patt in """
+        CAR CA[TD] CA[PT] C..
+        CA(R|)D CA(T&D)S CA.(&S)
+    """.split():
+        print patt, ':',  trie.matchex(patt)
+
+    trie = Trie()
+
+    for w in """
+        ABD
+        AC
+    """.split():
+        trie.add(w)
+    print trie.matchex('A(B&C)D')
