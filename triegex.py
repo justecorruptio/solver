@@ -20,7 +20,11 @@ class ConjexParser(object):
                     args[1][j] = self._clean(branch)
                 tree[i] = ('|', args[1])
             elif name == 'subpattern':
-                tree[i] =('|', [self._clean(args[1])])
+                res = self._clean(args[1])
+                if len(res) == 1:
+                    tree[i] = res[0]
+                else:
+                    tree[i] = ('|', [res])
             elif name.endswith('repeat'):
                 a = args[0]
                 b = min(args[1], 32)
@@ -32,6 +36,8 @@ class ConjexParser(object):
                 tree[i] = ('^',)
             elif name == 'any':
                 tree[i] = ('.',)
+            elif name == 'at':
+                tree[i] = ({'at_beginning': '^', 'at_end': '$'}[args],)
             else:
                 raise NotImplemented()
 
@@ -67,6 +73,32 @@ class TrieNode(object):
 
     def __repr__(self):
         return '(%s, %s)' % (self.terminal, self.children)
+
+class EntangleSet(object):
+    def __init__(self):
+        self.sets = []
+        self.next_id = 1
+        self.deletes = set()
+
+    def wrap(self, frum, child):
+        idx = self.next_id
+        res = (idx, child)
+        self.next_id += 1
+
+        #print "LINK", frum, idx, child.children.keys()
+
+        for s in self.sets:
+            if frum in s:
+                s.add(idx)
+
+        return res
+
+    def get_delete_ids(self):
+        to_delete = set()
+        for s in self.sets:
+            if s & self.deletes:
+                to_delete.update(s)
+        return to_delete
 
 
 class Trie(object):
@@ -117,37 +149,58 @@ class Trie(object):
 
     def matchex(self, conjex):
         cj_tree = ConjexParser(conjex).tree
+        print cj_tree
+
+        es = EntangleSet()
 
         def _recur(in_ptr, cj):
             ptrs = [in_ptr]
-            next = set()
-            for node in cj:
-                name = node[0]
-                if name == '_':
-                    c = node[1]
-                    for ptr in ptrs:
+            next = []
+
+            for i, node in enumerate(cj):
+                for curr_nid, ptr in ptrs:
+                    #print curr_nid, ptr.children.keys()
+                    name = node[0]
+                    if name == '_':
+                        c = node[1]
                         if c in ptr.children:
-                            next.add(ptr.children[c])
-                elif name == '.':
-                    for ptr in ptrs:
-                        next.update(ptr.children.itervalues())
-                elif name == '|':
-                    for ptr in ptrs:
+                            next.append(es.wrap(curr_nid, ptr.children[c]))
+                        else:
+                            es.deletes.add(curr_nid)
+                    elif name == '.':
+                        for child in ptr.children.itervalues():
+                            next.append(es.wrap(curr_nid, child))
+                    elif name == '|':
                         for branch in node[1]:
-                            next.update(_recur(ptr, branch))
-                elif name == '&':
-                    for ptr in ptrs:
-                        temp = [_recur(ptr, branch) for branch in node[1]]
-                        if all(temp):
-                            for t in temp:
-                                next.update(t)
+                            for _, child in _recur((curr_nid, ptr), branch):
+                                next.append(es.wrap(curr_nid, child))
+                    elif name == '&':
+                        result = [_recur((curr_nid, ptr), branch) for branch in node[1]]
+                        if all(result):
+                            tangle = set()
+                            for _, child in sum(result, []):
+                                wrapped = es.wrap(curr_nid, child)
+                                next.append(wrapped)
+                                tangle.add(wrapped[0])
+                            es.sets.append(tangle)
+                            #print "create", tangle
+                    elif name == '$':
+                        if ptr.terminal:
+                            next.append(es.wrap(curr_nid, ptr))
+                        else:
+                            es.deletes.add(curr_nid)
 
                 ptrs = next
-                next = set()
+                next = []
 
             return ptrs
 
-        return sorted(filter(None, [ptr.terminal for ptr in _recur(self.root, cj_tree)]))
+        result = _recur(es.wrap(0, self.root), cj_tree)
+        #print es.sets,
+        delete_ids = es.get_delete_ids()
+        result = [ptr.terminal for idx, ptr in result if idx not in delete_ids]
+
+        return sorted(filter(None, result))
 
 
 if __name__ == '__main__':
@@ -183,13 +236,23 @@ if __name__ == '__main__':
         CAR CA[TD] CA[PT] C..
         CA(R|)D CA(T&D)S CA.(&S)
     """.split():
-        print patt, ':',  trie.matchex(patt)
+        pass
+        #print patt, ':',  trie.matchex(patt)
 
     trie = Trie()
 
     for w in """
-        ABD
         AC
+        BC
     """.split():
         trie.add(w)
-    print trie.matchex('A(B&C)D')
+    #print "LAST!!!", trie.matchex('(A&B)C')
+
+    trie = Trie()
+    for w in """
+        AC
+        B
+        BD
+    """.split():
+        trie.add(w)
+    print trie.matchex('.($&D)')
