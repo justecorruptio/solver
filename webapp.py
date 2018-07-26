@@ -37,7 +37,7 @@ uncommon = Freq(anagram, 'uncommon.txt')
 urls = (
     '/?', 'index',
     '/d/([a-zA-Z]+)/?', 'definition',
-    '/t(?:est)?/([-a-zA-Z_]{2,3})/?', 'test',
+    '/t(?:est)?/?', 'test',
     '/game/?', 'game',
     '/game/scores?', 'game_scores',
     '/([,a-zA-Z]+)/?', 'api',
@@ -110,30 +110,25 @@ class definition(object):
         return (dictionary.lookup(word.upper()) or 'No definition found!') + '\n'
 
 class test(object):
-    def GET(self, query):
-        regex_q = re.sub(r'[-_]', '.', query)
+    def GET(self):
         form_q = ''
         rows = ''
         elapsed = 0.0
+        pattern = ''
         return (header + test_template + timed_footer).format(**locals())
 
-    def POST(self, query):
+    def POST(self):
         start_time = time.time()
-        regex = re.sub(r'[-_]', '.', query)
-        regex = regex.upper().strip()
-        regex = '^' + regex + '$'
+        form = web.input(q='', pattern='')
+        pattern = form.pattern.upper().strip()
 
-        form = web.input(q='')
         form_q = re.sub(r'[^a-zA-Z\n]', ' ', form.q)
         form_q = re.sub(r'[ \t]+', ' ', form_q)
         form_q = re.sub(r'\s*\n\s*', '\n', form_q)
         form_q = form_q.upper().strip()
 
         data = set(form_q.split())
-        correct = set(
-            word for word in anagram.words
-            if re.match(regex, word)
-        )
+        correct = set(anagram.triegex.matchex(pattern))
 
         missing = [(word, True) for word in correct - data]
         extra = [(word, False) for word in data - correct]

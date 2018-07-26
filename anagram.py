@@ -1,4 +1,5 @@
 from itertools import combinations
+from triegex import Triegex
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 PRIMES = [
@@ -13,6 +14,7 @@ class Anagram(object):
         self.words = set()
         self.data = {}
         self.tiered = [{} for i in xrange(16)]
+        self.triegex = Triegex()
 
         fh = open(file_name, 'r')
         for line in fh:
@@ -21,6 +23,8 @@ class Anagram(object):
             self.data.setdefault(hx, []).append(line)
             self.tiered[len(line)].setdefault(hx, []).append(line)
             self.words.add(line)
+            if len(line) <= 8:
+                self.triegex.add(line)
 
     def hash(self, letters):
         global LETTERS_TO_PRIMES
@@ -84,7 +88,7 @@ class Anagram(object):
 def main():
     import time
     a = time.time()
-    anagram = Anagram()
+    anagram = Anagram('owl3.txt')
     print time.time() - a
 
     a = time.time()
@@ -109,6 +113,10 @@ def main():
         print ' + '.join(combo), '=', built
     print time.time() - a
     '''
+
+    a = time.time()
+    print anagram.triegex.matchex('M..(A&AE)')
+    print time.time() - a
 
 if __name__ == '__main__':
     main()

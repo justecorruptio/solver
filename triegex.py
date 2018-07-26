@@ -101,7 +101,7 @@ class EntangleSet(object):
         return to_delete
 
 
-class Trie(object):
+class Triegex(object):
     def __init__(self):
         self.root = TrieNode()
 
@@ -149,7 +149,7 @@ class Trie(object):
 
     def matchex(self, conjex):
         cj_tree = ConjexParser(conjex).tree
-        print cj_tree
+        #print cj_tree
 
         es = EntangleSet()
 
@@ -197,14 +197,16 @@ class Trie(object):
 
         result = _recur(es.wrap(0, self.root), cj_tree)
         #print es.sets,
+        es.deletes.update(idx for idx, ptr in result if not ptr.terminal)
         delete_ids = es.get_delete_ids()
+        #print delete_ids
         result = [ptr.terminal for idx, ptr in result if idx not in delete_ids]
 
         return sorted(filter(None, result))
 
 
 if __name__ == '__main__':
-    trie = Trie()
+    trie = Triegex()
 
     for w in """
         CAD
@@ -234,12 +236,12 @@ if __name__ == '__main__':
 
     for patt in """
         CAR CA[TD] CA[PT] C..
-        CA(R|)D CA(T&D)S CA.(&S)
+        CA(R|)D CA(T&D)S CA.($&S)
     """.split():
         pass
-        #print patt, ':',  trie.matchex(patt)
+        print patt, ':',  trie.matchex(patt)
 
-    trie = Trie()
+    trie = Triegex()
 
     for w in """
         AC
@@ -248,11 +250,11 @@ if __name__ == '__main__':
         trie.add(w)
     #print "LAST!!!", trie.matchex('(A&B)C')
 
-    trie = Trie()
+    trie = Triegex()
     for w in """
         AC
         B
         BD
     """.split():
         trie.add(w)
-    print trie.matchex('.($&D)')
+    #print trie.matchex('.($&D)')

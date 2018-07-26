@@ -56,11 +56,17 @@ index_template = """
 
 test_template = """
     <div class="row mono">
-    <div class="col-sm-12"><h3>Scrabble Test: {query}</h3></div>
+    <div class="col-sm-12"><h3>Scrabble Test</h3></div>
     <div class="col-sm-12">
         <form id="qform" action="" method="post">
             <div class="form-group">
-            <textarea class="form-control text-uppercase"
+            <input
+                class="form-control text-uppercase"
+                name="pattern"
+                autofocus
+                value="{pattern}"
+            >
+            <textarea class="form-control text-uppercase mt-3"
                 name="q" rows="10" autofocus>{form_q}</textarea>
             </div>
             <div class="form-group">
