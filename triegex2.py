@@ -96,7 +96,7 @@ class State(object):
                 self.ptrs = new_ptrs
             return accepted_chars
 
-        elif self.op == 'and':
+        elif self.op == '&':
             children_accepted_chars = [c.step(charset, inv=inv, execute=False) for c in self.children]
             good_chars = reduce(lambda a, b: set(a) & set(b), children_accepted_chars)
             if good_chars:
@@ -109,15 +109,26 @@ class State(object):
 
             return good_chars
 
+        elif self.op == '|':
+            children_accepted_chars = [c.step(charset, inv=inv) for c in self.children]
+            good_chars = reduce(lambda a, b: set(a) | set(b), children_accepted_chars)
+
+            return good_chars
+
     def close(self):
         if self.op is None:
             return set(filter(None, [ptr.terminal for ptr in self.ptrs]))
 
-        if self.op == 'and':
+        elif self.op == '&':
             children_ptrs = [c.close() for c in self.children]
             if not all(children_ptrs):
                 return set()
             return reduce(lambda a, b: a | b, children_ptrs)
+
+        elif self.op == '|':
+            children_ptrs = [c.close() for c in self.children]
+            return reduce(lambda a, b: a | b, children_ptrs)
+
 
 class Triegex(object):
     def __init__(self):
@@ -159,8 +170,8 @@ class Triegex(object):
                     in_state.step(node[1])
                 elif name == '.':
                     in_state.step('', inv=True)
-                elif name == '&':
-                    sub_states = in_state.split('and', len(node[1]))
+                elif name in '&|':
+                    sub_states = in_state.split(name, len(node[1]))
                     for sub_node, sub_state in zip(node[1], sub_states):
                         _recur(sub_node, sub_state)
 
@@ -179,6 +190,8 @@ if __name__ == '__main__':
         CAD
         CAR
         CARD
+        CARE
+        CATE
         CARET
         CARS
         CART
@@ -190,11 +203,4 @@ if __name__ == '__main__':
     """.split():
         trie.add(w)
 
-    trie = Triegex()
-
-    for w in """
-        ARC AT ATCD ATE
-    """.split():
-        trie.add(w)
-
-    print trie.matchex('A(R&T).')
+    print trie.matchex('C.(R&T|Y).')
