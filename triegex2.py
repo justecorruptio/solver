@@ -14,7 +14,7 @@ class ConjexParser(object):
             if name == 'literal':
                 tree[i] = ('_', chr(args))
             elif name == 'in':
-                tree[i] = ('[', [[branch] for branch in self._clean(args)])
+                tree[i] = ('|', [[branch] for branch in self._clean(args)])
             elif name == 'branch':
                 tree[i] = ('|', map(self._clean, args[1]))
             elif name == 'subpattern':
@@ -54,25 +54,6 @@ class ConjexParser(object):
 
         return tree
 
-class ConjexPlanner(object):
-    def __init__(self, tree):
-        self.tree = tree
-
-        dup = deepcopy(tree)
-        self.plan = self._split(dup, dup)
-
-    def _split(self, root, ptr):
-        for i, node in enumerate(ptr):
-            name = node[0]
-            if name in '&|':
-                res = []
-                for child in node[1]:
-                    ptr[i: i + 1] = child
-                    dup = deepcopy(root)
-                    res.append(self._split(dup, dup))
-                return ({'&': 'and', '|': 'or'}[name], res)
-        return ('base', root)
-
 class TrieNode(object):
     __slots__ = ['terminal', 'children']
 
@@ -88,6 +69,55 @@ class TrieNode(object):
 
     def __repr__(self):
         return '(%s, %s)' % (self.terminal, self.children)
+
+class State(object):
+    def __init__(self, ptrs):
+        self.op = None
+        self.children = []
+
+        self.ptrs = set(ptrs)
+
+    def split(self, op, num):
+        self.op = op
+        self.children = [State(deepcopy(self.ptrs)) for i in xrange(num)]
+        self.ptrs = None
+        return self.children
+
+    def step(self, charset, inv=False, execute=True):
+        if self.op is None:
+            new_ptrs = set()
+            accepted_chars = {}
+            for ptr in self.ptrs:
+                for char, child in ptr.children.iteritems():
+                    if (not inv) == (char in charset):
+                        accepted_chars[char] = child
+                        new_ptrs.add(child)
+            if execute:
+                self.ptrs = new_ptrs
+            return accepted_chars
+
+        elif self.op == 'and':
+            children_accepted_chars = [c.step(charset, inv=inv, execute=False) for c in self.children]
+            good_chars = reduce(lambda a, b: set(a) & set(b), children_accepted_chars)
+            if good_chars:
+                for child in self.children:
+                    child.step(good_chars, False)
+            else:
+                self.op = None
+                self.ptrs = set()
+                self.children = []
+
+            return good_chars
+
+    def close(self):
+        if self.op is None:
+            return set(filter(None, [ptr.terminal for ptr in self.ptrs]))
+
+        if self.op == 'and':
+            children_ptrs = [c.close() for c in self.children]
+            if not all(children_ptrs):
+                return set()
+            return reduce(lambda a, b: a | b, children_ptrs)
 
 class Triegex(object):
     def __init__(self):
@@ -116,39 +146,32 @@ class Triegex(object):
 
         return _recur(self.root)
 
-    def _step(self, ptrs):
-        res = set()
-        for ptr in ptrs:
-            name = node[0]
-            if name == '_':
-                c = node[1]
-                if c in ptr.children:
-                    res.add(ptr.children[c])
-            elif name == '.':
-                res.update(ptr.children.itervalues())
-        return res
-
-    def _init_state(self, plan):
-        name, sub = plan
-        if name == 'base':
-            return (name, set([self.root]), sub)
-        return (name, set([self.root]), map(self._init_state, sub))
-
     def matchex(self, conjex):
         parser = ConjexParser(conjex)
-        planner = ConjexPlanner(parser.tree)
+        cj_tree = parser.tree
 
-        state = self._init_state(planner.plan)
+        state = State([self.root])
+
+        def _recur(cj_ptr, in_state):
+            for node in cj_ptr:
+                name = node[0]
+                if name == '_':
+                    in_state.step(node[1])
+                elif name == '.':
+                    in_state.step('', inv=True)
+                elif name == '&':
+                    sub_states = in_state.split('and', len(node[1]))
+                    for sub_node, sub_state in zip(node[1], sub_states):
+                        _recur(sub_node, sub_state)
+
+        _recur(cj_tree, state)
+        return sorted(state.close())
 
 
 if __name__ == '__main__':
     cp = ConjexParser(r'..(I&Y).')
 
     #print cp.tree
-
-    planner = ConjexPlanner(cp.tree)
-
-    #print planner.plan
 
     trie = Triegex()
 
@@ -167,5 +190,11 @@ if __name__ == '__main__':
     """.split():
         trie.add(w)
 
-    #print trie._matchex_one(ConjexParser(r'CA.').tree)
-    print trie.matchex(r'CA(R&D)')
+    trie = Triegex()
+
+    for w in """
+        ARC AT ATCD ATE
+    """.split():
+        trie.add(w)
+
+    print trie.matchex('A(R&T).')
