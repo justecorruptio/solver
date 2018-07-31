@@ -25,7 +25,7 @@ class ConjexParser(object):
                     tree[i] = ('|', [res])
             elif name.endswith('repeat'):
                 a = args[0]
-                b = min(args[1], 32)
+                b = min(args[1], 16)
                 tree[i] = ('@', self._clean(args[2]), a, b)
             elif name == 'range':
                 tree[i] = ('-', chr(args[0]), chr(args[1]))
@@ -78,8 +78,8 @@ class State(object):
         self.ptrs = set(ptrs)
 
     def split(self, op, num):
+        self.children = [deepcopy(self) for i in xrange(num)]
         self.op = op
-        self.children = [State(deepcopy(self.ptrs)) for i in xrange(num)]
         self.ptrs = None
         return self.children
 
@@ -160,6 +160,7 @@ class Triegex(object):
     def matchex(self, conjex):
         parser = ConjexParser(conjex)
         cj_tree = parser.tree
+        print cj_tree
 
         state = State([self.root])
 
@@ -174,6 +175,12 @@ class Triegex(object):
                     sub_states = in_state.split(name, len(node[1]))
                     for sub_node, sub_state in zip(node[1], sub_states):
                         _recur(sub_node, sub_state)
+                elif name == '@':
+                    low, high = node[2], node[3]
+                    sub_states = in_state.split('|', high - low + 1)
+                    for i, sub_state in enumerate(sub_states):
+                        for j in xrange(low + i):
+                            _recur(node[1], sub_state)
 
         _recur(cj_tree, state)
         return sorted(state.close())
@@ -186,6 +193,7 @@ if __name__ == '__main__':
 
     trie = Triegex()
 
+    '''
     for w in """
         CAD
         CAR
@@ -198,9 +206,19 @@ if __name__ == '__main__':
         CAT
         CATS
         CAM
+        CAMS
         CAYS
         CIG
     """.split():
         trie.add(w)
+    '''
 
-    print trie.matchex('C.(R&T|Y).')
+    for w in """
+        CAA BAA CAAAAA BAAAAA CAAA B
+        XY ZW
+        CBCB
+        CB
+    """.split():
+        trie.add(w)
+
+    print trie.matchex('(C&B).*')
