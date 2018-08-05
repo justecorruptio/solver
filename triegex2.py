@@ -83,6 +83,16 @@ class State(object):
         self.ptrs = None
         return self.children
 
+    def merge(self):
+        if self.op == '|' and all(c.op is None for c in self.children):
+            self.op = None
+            self.ptrs = set()
+            #for child in self.children:
+            #    print "--", child.op, child.ptrs
+            for child in self.children:
+                self.ptrs |= child.ptrs
+            self.children = []
+
     def step(self, charset, inv=False, execute=True):
         if self.op is None:
             new_ptrs = set()
@@ -160,7 +170,6 @@ class Triegex(object):
     def matchex(self, conjex):
         parser = ConjexParser(conjex)
         cj_tree = parser.tree
-        print cj_tree
 
         state = State([self.root])
 
@@ -181,6 +190,7 @@ class Triegex(object):
                     for i, sub_state in enumerate(sub_states):
                         for j in xrange(low + i):
                             _recur(node[1], sub_state)
+                in_state.merge()
 
         _recur(cj_tree, state)
         return sorted(state.close())
@@ -209,16 +219,18 @@ if __name__ == '__main__':
         CAMS
         CAYS
         CIG
-    """.split():
-        trie.add(w)
-    '''
 
-    for w in """
         CAA BAA CAAAAA BAAAAA CAAA B
         XY ZW
         CBCB
         CB
     """.split():
         trie.add(w)
+    '''
+    for w in """
+        ABC BAD
+    """.split():
+        trie.add(w)
 
-    print trie.matchex('(C&B).*')
+    #print trie.matchex('(C&B).*')
+    print trie.matchex('..(C&D)')
