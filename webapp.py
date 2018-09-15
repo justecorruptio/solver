@@ -128,7 +128,7 @@ class test(object):
         form_q = form_q.upper().strip()
 
         data = set(form_q.split())
-        correct = set(anagram.triegex.matchex(pattern))
+        correct = set(anagram.conjex.matchex(pattern))
 
         missing = [(word, True) for word in correct - data]
         extra = [(word, False) for word in data - correct]

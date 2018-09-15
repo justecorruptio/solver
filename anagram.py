@@ -1,5 +1,5 @@
 from itertools import combinations
-from triegex import Triegex
+from conjex import Conjex
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 PRIMES = [
@@ -14,7 +14,7 @@ class Anagram(object):
         self.words = set()
         self.data = {}
         self.tiered = [{} for i in xrange(16)]
-        self.triegex = Triegex()
+        self.conjex = Conjex()
 
         fh = open(file_name, 'r')
         for line in fh:
@@ -24,7 +24,7 @@ class Anagram(object):
             self.tiered[len(line)].setdefault(hx, []).append(line)
             self.words.add(line)
             if len(line) <= 8:
-                self.triegex.add(line)
+                self.conjex.add(line)
 
     def hash(self, letters):
         global LETTERS_TO_PRIMES
@@ -115,7 +115,7 @@ def main():
     '''
 
     a = time.time()
-    print anagram.triegex.matchex('M..(A&AE)')
+    print anagram.conjex.matchex('M..(A&AE)')
     print time.time() - a
 
 if __name__ == '__main__':
