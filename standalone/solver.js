@@ -66,11 +66,25 @@ snatch = input => {
             }
         });
     }
-    res = Object.keys(res);
-    res.sort((a, b) => a.length > b.length);
-
-    return res;
+    return Object.keys(res);
 }
+
+formulas = output => {
+    var res = [];
+    output.map(term => {
+        var hx = hash(term.replace(/\W/g, '')),
+            equ = term.match(/\w{2,}|\w(?: \w)*/g).join(' + ');
+        (grams[hx] || []).map(word => {
+            res.push(`${equ} = ${word}`);
+        });
+    });
+
+    return res.sort((a, b) => a.length > b.length);
+};
+
+isWord = word => (
+    (grams[hash(word)] || []).indexOf(word) >= 0
+)
 
 grams = {};
 
@@ -80,3 +94,30 @@ fetch('owl3.txt').then(resp => resp.text()).then(owl => {
         (grams[hx] = grams[hx] || []).push(word);
     });
 });
+
+
+handleClear = () => {
+    $('input').value = '';
+    $('answer').innerHTML = '';
+}
+
+handleSolve = () => {
+    var $answer = $('answer'),
+        input = $('input').value.toUpperCase().match(/\w+/g);
+
+    if(!input) return;
+    $answer.innerHTML = '';
+    if(input.length == 1 && isWord(input[0])) {
+        $answer.innerHTML += `<cell class="ok">${input[0]} is a word.</cell>`;
+    }
+    input.map(word => {
+        if(word.length > 1 && !isWord(word)) {
+            $answer.innerHTML += `<cell class="err">${word} is not word!</cell>`;
+        }
+    })
+
+    res = formulas(snatch(input));
+    res.map(formula => {
+        $answer.innerHTML += `<cell>${formula}</cell>`;
+    });
+}
