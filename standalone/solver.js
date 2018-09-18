@@ -69,6 +69,26 @@ snatch = input => {
     return Object.keys(res);
 }
 
+subtract = (b, a) => {
+    for(var letter of a)
+        b = b.replace(letter, '');
+    return b;
+}
+
+extend = word => {
+    var res = {},
+        ix = hash(word);
+
+    for(var i = word.length; i < word.length + 4; i++)
+        for(var hx in tiered[i])
+            if (hx % ix == 0)
+                grams[hx].map(built => {
+                    var sub = subtract(built, word);
+                    res[[word, ...sub.split('')].join(' ')] = 1;
+                });
+    return Object.keys(res);
+}
+
 formulas = output => {
     var res = [];
     output.map(term => {
@@ -87,26 +107,31 @@ isWord = word => (
 )
 
 grams = {};
+tiered = Array(16).fill(0).map(x => ({}));
 
 fetch('owl3.txt').then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).map(word => {
-        var hx = hash(word);
-        (grams[hx] = grams[hx] || []).push(word);
+        var hx = hash(word),
+            l = word.length;
+        (tiered[l][hx] = grams[hx] = grams[hx] || []).push(word);
     });
 });
 
 
 handleClear = () => {
-    $('input').value = '';
     $('answer').innerHTML = '';
+    $('input').value = '';
+    $('input').focus();
 }
 
 handleSolve = () => {
     var $answer = $('answer'),
-        input = $('input').value.toUpperCase().match(/\w+/g);
+        input = $('input').value.toUpperCase().match(/\w+/g),
+        res;
 
     if(!input) return;
     $answer.innerHTML = '';
+
     if(input.length == 1 && isWord(input[0])) {
         $answer.innerHTML += `<cell class="ok">${input[0]} is a word.</cell>`;
     }
@@ -116,8 +141,11 @@ handleSolve = () => {
         }
     })
 
-    res = formulas(snatch(input));
-    res.map(formula => {
+    if(input.length > 1)
+        res = snatch(input);
+    else
+        res = extend(input[0]);
+    formulas(res).map(formula => {
         $answer.innerHTML += `<cell>${formula}</cell>`;
     });
 }
