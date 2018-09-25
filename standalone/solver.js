@@ -125,7 +125,7 @@ handleClear = () => {
 handleSolve = () => {
     var $answer = $('answer'),
         input = $('input').value.toUpperCase().match(/\w+/g),
-        res;
+        res = [];
 
     if(!input) return;
     $answer.innerHTML = '';
@@ -141,9 +141,14 @@ handleSolve = () => {
 
     if(input.length > 1)
         res = snatch(input);
-    else
+    else if(input[0].length > 2)
         res = extend(input[0]);
+
     formulas(res).forEach(formula => {
         $answer.innerHTML += `<cell>${formula}</cell>`;
     });
+
+    if(!$answer.innerHTML) {
+        $answer.innerHTML += `<cell>No solution!</cell>`;
+    }
 }
