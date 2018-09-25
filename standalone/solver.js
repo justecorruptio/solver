@@ -2,7 +2,7 @@ PRIME_MAP = {};
 [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41,
     43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101
-].map((p, i) => {
+].forEach((p, i) => {
     PRIME_MAP[String.fromCharCode(65 + i)] = p;
 });
 
@@ -49,22 +49,20 @@ snatch = input => {
         );
 
     for(var i = 0; i < min(words.length + 1, 4); i++) {
-        comb(words, i).map(w => {
+        for(var w of comb(words, i)) {
             var c = w.join('');
-            if(c.length <= 15) {
-                words_hx = hash(c);
+            if(c.length > 15)
+                continue;
+            var words_hx = hash(c);
 
-                letter_hashes.slice(max(0, 2 - w.length), 15 - c.length).map(entries => {
-                    entries.map(([l, letter_hx]) => {
-                        var hx = words_hx * letter_hx;
-                        if(grams[hx])
-                            grams[hx].map(built => {
-                                res[[...w.sort(), ...l.sort()].join(' ')] = 1;
-                            });
-                    });
+            letter_hashes.slice(max(0, 2 - w.length), 15 - c.length).forEach(entries => {
+                entries.forEach(([l, letter_hx]) => {
+                    var hx = words_hx * letter_hx;
+                    if(grams[hx])
+                        res[[...w.sort(), ...l.sort()].join(' ')] = 1;
                 });
-            }
-        });
+            });
+        }
     }
     return Object.keys(res);
 }
@@ -77,24 +75,24 @@ subtract = (b, a) => {
 
 extend = word => {
     var res = {},
+        sub,
         ix = hash(word);
 
     for(var i = word.length; i < word.length + 4; i++)
         for(var hx in tiered[i])
-            if (hx % ix == 0)
-                grams[hx].map(built => {
-                    var sub = subtract(built, word);
-                    res[[word, ...sub.split('')].join(' ')] = 1;
-                });
+            if (hx % ix == 0) {
+                sub = subtract(grams[hx][0], word);
+                res[[word, ...sub.split('').sort()].join(' ')] = 1;
+            }
     return Object.keys(res);
 }
 
 formulas = output => {
     var res = [];
-    output.map(term => {
+    output.forEach(term => {
         var hx = hash(term.replace(/\W/g, '')),
             equ = term.match(/\w{2,}|\w(?: \w)*/g).join(' + ');
-        (grams[hx] || []).map(word => {
+        (grams[hx] || []).forEach(word => {
             res.push(`${equ} = ${word}`);
         });
     });
@@ -110,7 +108,7 @@ grams = {};
 tiered = Array(16).fill(0).map(x => ({}));
 
 fetch('owl3.txt').then(resp => resp.text()).then(owl => {
-    owl.match(/\w+/g).map(word => {
+    owl.match(/\w+/g).forEach(word => {
         var hx = hash(word),
             l = word.length;
         (tiered[l][hx] = grams[hx] = grams[hx] || []).push(word);
@@ -135,7 +133,7 @@ handleSolve = () => {
     if(input.length == 1 && isWord(input[0])) {
         $answer.innerHTML += `<cell class="ok">${input[0]} is a word.</cell>`;
     }
-    input.map(word => {
+    input.forEach(word => {
         if(word.length > 1 && !isWord(word)) {
             $answer.innerHTML += `<cell class="err">${word} is not word!</cell>`;
         }
@@ -145,7 +143,7 @@ handleSolve = () => {
         res = snatch(input);
     else
         res = extend(input[0]);
-    formulas(res).map(formula => {
+    formulas(res).forEach(formula => {
         $answer.innerHTML += `<cell>${formula}</cell>`;
     });
 }
