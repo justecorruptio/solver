@@ -78,7 +78,8 @@ extend = word => {
         sub,
         ix = hash(word);
 
-    for(var i = word.length; i < word.length + 4; i++)
+    //for(var i = word.length; i < word.length + 4; i++)
+    for(var i = word.length; i <= 15; i++)
         for(var hx in tiered[i])
             if (hx % ix == 0) {
                 sub = subtract(grams[hx][0], word);
@@ -123,19 +124,18 @@ handleClear = () => {
 }
 
 handleSolve = () => {
-    var $answer = $('answer'),
-        input = $('input').value.toUpperCase().match(/\w+/g),
-        res = [];
+    var input = $('input').value.toUpperCase().match(/\w+/g),
+        res = [],
+        output = '';
 
     if(!input) return;
-    $answer.innerHTML = '';
 
     if(input.length == 1 && isWord(input[0])) {
-        $answer.innerHTML += `<cell class="ok">${input[0]} is a word.</cell>`;
+        output += `<cell class="ok">${input[0]} is a word.</cell>`;
     }
     input.forEach(word => {
         if(word.length > 1 && !isWord(word)) {
-            $answer.innerHTML += `<cell class="err">${word} is not word!</cell>`;
+            output += `<cell class="err">${word} is not word!</cell>`;
         }
     })
 
@@ -145,10 +145,12 @@ handleSolve = () => {
         res = extend(input[0]);
 
     formulas(res).forEach(formula => {
-        $answer.innerHTML += `<cell>${formula}</cell>`;
+        output += `<cell>${formula}</cell>`;
     });
 
-    if(!$answer.innerHTML) {
-        $answer.innerHTML += `<cell>No solution!</cell>`;
+    if(!output) {
+        output += `<cell>No solution!</cell>`;
     }
+
+    $('answer').innerHTML = output;
 }
