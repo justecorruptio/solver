@@ -1,10 +1,4 @@
-PRIME_MAP = {};
-[
-    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41,
-    43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101
-].forEach((p, i) => {
-    PRIME_MAP[String.fromCharCode(65 + i)] = p;
-});
+String.prototype.sort = function() { return this.split('').sort(); };
 
 $ = id => document.getElementById(id);
 min = (a, b) => a < b ? a : b;
@@ -15,9 +9,7 @@ comb = (pool, r) => {
     var n = pool.length;
     if(r > n) return [];
 
-    var indices = [];
-    for(i = 0; i < r; i++) indices[i] = i;
-
+    var indices = range(0, r);
     var ret = [];
 
     while(1) {
@@ -33,39 +25,33 @@ comb = (pool, r) => {
     return ret;
 }
 
-hash = word => {
-    var prod = 1;
-    for(var letter of word) prod *= PRIME_MAP[letter];
-    return prod;
-};
+hash = word => word.sort().join('');
 
 snatch = input => {
-    var res = {},
+    var res = new Set(),
         letters = input.filter(word => word.length == 1),
-        words = input.filter(word => word.length > 1);
+        words = input.filter(word => word.length > 1),
 
-        letter_hashes = range(0, min(letters.length + 1, 15)).map(
-            j => comb(letters, j).map(l => [l, hash(l)])
+        letter_combs = range(0, 10).map(
+            j => comb(letters, j).map(l => l.join(''))
         );
 
-    for(var i = 0; i < min(words.length + 1, 4); i++) {
-        for(var w of comb(words, i)) {
+    range(0, 4).forEach(i => {
+        comb(words, i).forEach( w => {
             var c = w.join('');
-            if(c.length > 15)
-                continue;
-            var words_hx = hash(c);
-            var hashes = letter_hashes.slice(max(0, 2 - w.length), 15 - c.length);
+            if(c.length > 15) return;
 
-            hashes.forEach(entries => {
-                entries.forEach(([l, letter_hx]) => {
-                    var hx = words_hx * letter_hx;
-                    if(grams[hx])
-                        res[[...w.sort(), ...l.sort()].join(' ')] = 1;
+            var combs = letter_combs.slice(max(0, 2 - w.length), 15 - c.length);
+
+            combs.forEach(entries => {
+                entries.forEach(l => {
+                    if(grams[hash(c + l)])
+                        res.add([...w.sort(), ...l.sort()].join(' '));
                 });
             });
-        }
-    }
-    return Object.keys(res);
+        });
+    });
+    return res;
 }
 
 subtract = (b, a) => {
@@ -75,17 +61,14 @@ subtract = (b, a) => {
 }
 
 extend = word => {
-    var res = {},
-        sub,
-        ix = hash(word);
+    var res = new Set(),
+        regex = new RegExp(hash(word).split('').join('.*'));
 
     for(var i = word.length; i <= 15; i++)
         for(var hx in tiered[i])
-            if (hx % ix == 0) {
-                sub = subtract(grams[hx][0], word);
-                res[[word, ...sub.split('').sort()].join(' ')] = 1;
-            }
-    return Object.keys(res);
+            if(hx.match(regex))
+                res.add([word, ...subtract(hx, word).sort()].join(' '));
+    return res;
 }
 
 formulas = output => {
@@ -101,12 +84,10 @@ formulas = output => {
     return res.sort((a, b) => a.length > b.length);
 };
 
-isWord = word => (
-    (grams[hash(word)] || []).indexOf(word) >= 0
-)
+isWord = word => (grams[hash(word)] || []).indexOf(word) >= 0
 
 grams = {};
-tiered = Array(16).fill(0).map(x => ({}));
+tiered = range(0, 16).map(x => ({}));
 
 fetch('owl3.txt').then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).forEach(word => {
