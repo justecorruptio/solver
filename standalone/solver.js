@@ -54,8 +54,9 @@ snatch = input => {
             if(c.length > 15)
                 continue;
             var words_hx = hash(c);
+            var hashes = letter_hashes.slice(max(0, 2 - w.length), 15 - c.length);
 
-            letter_hashes.slice(max(0, 2 - w.length), 15 - c.length).forEach(entries => {
+            hashes.forEach(entries => {
                 entries.forEach(([l, letter_hx]) => {
                     var hx = words_hx * letter_hx;
                     if(grams[hx])
@@ -78,7 +79,6 @@ extend = word => {
         sub,
         ix = hash(word);
 
-    //for(var i = word.length; i < word.length + 4; i++)
     for(var i = word.length; i <= 15; i++)
         for(var hx in tiered[i])
             if (hx % ix == 0) {
@@ -115,7 +115,6 @@ fetch('owl3.txt').then(resp => resp.text()).then(owl => {
         (tiered[l][hx] = grams[hx] = grams[hx] || []).push(word);
     });
 });
-
 
 handleClear = () => {
     $('answer').innerHTML = '';
