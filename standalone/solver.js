@@ -64,10 +64,9 @@ extend = word => {
     var res = new Set(),
         regex = new RegExp(hash(word).split('').join('.*'));
 
-    for(var i = word.length; i <= 15; i++)
-        for(var hx in tiered[i])
-            if(hx.match(regex))
-                res.add([word, ...subtract(hx, word).sort()].join(' '));
+    for(var hx in grams)
+        if(hx.match(regex))
+            res.add([word, ...subtract(hx, word).sort()].join(' '));
     return res;
 }
 
@@ -87,14 +86,14 @@ formulas = output => {
 isWord = word => (grams[hash(word)] || []).indexOf(word) >= 0
 
 grams = {};
-tiered = range(0, 16).map(x => ({}));
 
 fetch('owl3.txt').then(resp => resp.text()).then(owl => {
+    var start_ts = Date.now();
     owl.match(/\w+/g).forEach(word => {
-        var hx = hash(word),
-            l = word.length;
-        (tiered[l][hx] = grams[hx] = grams[hx] || []).push(word);
+        var hx = hash(word);
+        (grams[hx] = grams[hx] || []).push(word);
     });
+    $('time').innerText = Date.now() - start_ts;
 });
 
 handleClear = () => {
@@ -104,7 +103,10 @@ handleClear = () => {
 }
 
 handleSolve = () => {
-    var input = $('input').value.toUpperCase().match(/\w+/g),
+    var start_ts = Date.now();
+        value = $('input').value.toUpperCase(),
+        input = value.match(/\w+/g),
+        is_extend = !!value.match(/\?/),
         res = [],
         output = '';
 
@@ -121,7 +123,7 @@ handleSolve = () => {
 
     if(input.length > 1)
         res = snatch(input);
-    else if(input[0].length > 2)
+    else if(input[0].length > 2 && is_extend)
         res = extend(input[0]);
 
     formulas(res).forEach(formula => {
@@ -133,4 +135,5 @@ handleSolve = () => {
     }
 
     $('answer').innerHTML = output;
+    $('time').innerText = Date.now() - start_ts | 0;
 }

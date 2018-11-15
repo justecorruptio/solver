@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
-<html  manifest="./app-cache.manifest">
+<!--<html  manifest="./app-cache.manifest">-->
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -7,6 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="apple-touch-icon" href="solver.png" />
+    <link rel="icon" type="image/png" href="solver.png" />
     <style>
         body {
             font-family: Arial,sans-serif;
@@ -73,6 +75,10 @@
             color: white;
         }
 
+        cell.minor {
+            color: #aaaaaa;
+        }
+
         @media (max-width: 800px) {
             cell{ width: calc(100% - 20px); }
         }
@@ -85,6 +91,7 @@
     <button class="bordered primary" onclick="handleSolve()">Solve!</button>
     <button class="bordered" onclick="handleClear()">Clear</button>
     <grid id="answer"></grid>
+    <grid><cell class="minor">Generated in <span id="time">0</span> ms.</cell></grid>
     <script src="solver.js"></script>
 </body>
 
