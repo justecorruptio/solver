@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<!--<html  manifest="./app-cache.manifest">-->
+<html  manifest="./app-cache.manifest">
 <html>
 <head>
     <meta charset="UTF-8">
@@ -46,6 +46,9 @@
         button.primary {
             background-color: #8855aa;
         }
+        button.secondary {
+            background-color: #aa6e55;
+        }
         button:hover {
             box-shadow: 0 0 5px #8855aa;
         }
@@ -86,10 +89,17 @@
 </head>
 
 <body>
-    <h1>Anagram/Snatch Solver</h1>
+    <h1>Anagram Solver</h1>
     <textarea id="input" class="bordered"></textarea>
-    <button class="bordered primary" onclick="handleSolve()">Solve!</button>
-    <button class="bordered" onclick="handleClear()">Clear</button>
+    <button class="bordered primary" onclick="handleSolve(true)">
+        Check
+    </button>
+    <button class="bordered secondary" onclick="handleSolve(false)">
+        Extend
+    </button>
+    <button class="bordered" onclick="handleClear()">
+        Clear
+    </button>
     <grid id="answer"></grid>
     <grid><cell class="minor">Generated in <span id="time">0</span> ms.</cell></grid>
     <script src="solver.js"></script>

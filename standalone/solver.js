@@ -102,29 +102,31 @@ handleClear = () => {
     $('input').focus();
 }
 
-handleSolve = () => {
+handleSolve = (checkOnly) => {
     var start_ts = Date.now();
         value = $('input').value.toUpperCase(),
         input = value.match(/\w+/g),
-        is_extend = !!value.match(/\?/),
         res = [],
         output = '';
 
     if(!input) return;
 
-    if(input.length == 1 && isWord(input[0])) {
-        output += `<cell class="ok">${input[0]} is a word.</cell>`;
-    }
-    input.forEach(word => {
-        if(word.length > 1 && !isWord(word)) {
-            output += `<cell class="err">${word} is not word!</cell>`;
+    input.forEach((word, i) => {
+        var good = isWord(word);
+        if(word.length > 1) {
+            if(good && checkOnly)
+                output += `<cell class="ok">${word} is a word.</cell>`;
+            else if(!good)
+                output += `<cell class="err">${word} is not word!</cell>`;
         }
     })
 
-    if(input.length > 1)
-        res = snatch(input);
-    else if(input[0].length > 2 && is_extend)
-        res = extend(input[0]);
+    if(!checkOnly) {
+        if(input.length > 1)
+            res = snatch(input);
+        else if(input[0].length > 2)
+            res = extend(input[0]);
+    }
 
     formulas(res).forEach(formula => {
         output += `<cell>${formula}</cell>`;
