@@ -90,22 +90,15 @@ letterFrequencyBananagrams = {
     "Z": 2
 }
 
-addUpFrequency = (a) => {
+addUpFrequency = (a, indexOfSpace) => {
     let res = 0;
-    a.forEach((letter, index) => {
+    for (let i = indexOfSpace; i < a.length; i++) {
+        let letter = a[i], index = i - indexOfSpace;
         if (letter in letterFrequencyBananagrams) {
             res += (index * 26 - letterFrequencyBananagrams[letter]);
         }
-    });
+    }
     return res;
-}
-
-sortByFrequency = (a, b) => {
-    let newLettersA = a.split(' ');
-    let newLettersB = b.split(' ');
-    newLettersA.shift();
-    newLettersB.shift();
-    return addUpFrequency(newLettersA) > addUpFrequency(newLettersB);
 }
 
 extend = word => {
@@ -116,7 +109,8 @@ extend = word => {
         if(hx.match(regex))
             res.add([word, ...subtract(hx, word).sort()].join(' '));
     let results = Array.from(res);
-    results.sort(sortByFrequency);
+    let indexOfSpace = results[0].indexOf(' ');
+    results.sort((a, b) => addUpFrequency(a, indexOfSpace) > addUpFrequency(b, indexOfSpace));
     return results;
 }
 
