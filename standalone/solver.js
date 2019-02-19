@@ -69,7 +69,7 @@ letterFrequencyBananagrams = {
     "E": 18,
     "F": 3,
     "G": 4,
-    "H": 1,
+    "H": 3,
     "I": 12,
     "J": 2,
     "K": 2,
@@ -90,12 +90,14 @@ letterFrequencyBananagrams = {
     "Z": 2
 }
 
+totalBananagramLetters = 142
+
 addUpFrequency = (a, indexOfSpace) => {
-    let res = 0;
+    let res = 1;
     for (let i = indexOfSpace; i < a.length; i++) {
         let letter = a[i], index = i - indexOfSpace;
         if (letter in letterFrequencyBananagrams) {
-            res += (index * 26 - letterFrequencyBananagrams[letter]);
+            res *= letterFrequencyBananagrams[letter] / totalBananagramLetters;
         }
     }
     return res;
@@ -110,7 +112,7 @@ extend = word => {
             res.add([word, ...subtract(hx, word).sort()].join(' '));
     let results = Array.from(res);
     let indexOfSpace = results[0].indexOf(' ');
-    results.sort((a, b) => addUpFrequency(a, indexOfSpace) > addUpFrequency(b, indexOfSpace));
+    results.sort((a, b) => addUpFrequency(a, indexOfSpace) < addUpFrequency(b, indexOfSpace));
     return results;
 }
 
