@@ -1,7 +1,6 @@
 String.prototype.sort = function() { return this.split('').sort(); };
 
 $ = id => document.getElementById(id);
-min = (a, b) => a < b ? a : b;
 max = (a, b) => a > b ? a : b;
 range = (l, h) => Array.from({length: h - l}, (x, i) => l + i);
 comb = (pool, r) => {
@@ -127,7 +126,6 @@ formulas = output => {
             }
         });
     });
-
     return res;
 };
 
@@ -143,6 +141,8 @@ fetch('owl3.txt').then(resp => resp.text()).then(owl => {
     });
     $('time').innerText = Date.now() - start_ts;
 });
+
+cell = (str, cls) => `<cell class="${cls || ''}">${str}</cell>`;
 
 handleClear = () => {
     $('answer').innerHTML = '';
@@ -161,12 +161,10 @@ handleSolve = (checkOnly) => {
 
     input.forEach((word, i) => {
         var good = isWord(word);
-        if(word.length > 1) {
-            if(good && checkOnly)
-                output += `<cell class="ok">${word} is a word.</cell>`;
-            else if(!good)
-                output += `<cell class="err">${word} is not word!</cell>`;
-        }
+        if(good && checkOnly)
+            output += cell(`${word} is a word.`, 'ok');
+        else if(!good && word.length > 1)
+            output += cell(`${word} is not word!`, 'err');
     })
 
     if(!checkOnly) {
@@ -177,13 +175,9 @@ handleSolve = (checkOnly) => {
     }
 
     formulas(res).forEach(formula => {
-        output += `<cell>${formula}</cell>`;
+        output += cell(formula);
     });
 
-    if(!output) {
-        output += `<cell>No solution!</cell>`;
-    }
-
-    $('answer').innerHTML = output;
+    $('answer').innerHTML = output || cell('No solution!');
     $('time').innerText = Date.now() - start_ts | 0;
 }
