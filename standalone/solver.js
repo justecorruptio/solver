@@ -89,9 +89,7 @@ formulas = output => {
         var hx = hash(term.replace(/\W/g, '')),
             equ = term.match(/\w{2,}|\w(?: \w)*/g).join(' + ');
         (grams[hx] || []).forEach(word => {
-            if (equ.length != word.length) {
-                res.push(`${equ} = ${word}`);
-            }
+            res.push(`${equ} = ${word}`);
         });
     });
     return res;
