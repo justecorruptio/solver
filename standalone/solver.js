@@ -59,6 +59,49 @@ subtract = (b, a) => {
     return b;
 }
 
+// taken from http://www.bananagrammer.com/2009/07/letter-distributions-in-bananagrams-and.html
+letterFrequencyBananagrams = {
+    "A": 13,
+    "B": 3,
+    "C": 3,
+    "D": 6,
+    "E": 18,
+    "F": 3,
+    "G": 4,
+    "H": 3,
+    "I": 12,
+    "J": 2,
+    "K": 2,
+    "L": 5,
+    "M": 3,
+    "N": 8,
+    "O": 11,
+    "P": 3,
+    "Q": 2,
+    "R": 9,
+    "S": 6,
+    "T": 9,
+    "U": 6,
+    "V": 3,
+    "W": 3,
+    "X": 2,
+    "Y": 3,
+    "Z": 2
+}
+
+totalBananagramLetters = 142
+
+addUpFrequency = (a, indexOfSpace) => {
+    let res = 1;
+    for (let i = indexOfSpace; i < a.length; i++) {
+        let letter = a[i], index = i - indexOfSpace;
+        if (letter in letterFrequencyBananagrams) {
+            res *= letterFrequencyBananagrams[letter] / totalBananagramLetters;
+        }
+    }
+    return res;
+}
+
 extend = word => {
     var res = new Set(),
         regex = new RegExp(hash(word).split('').join('.*'));
@@ -66,7 +109,10 @@ extend = word => {
     for(var hx in grams)
         if(hx.match(regex))
             res.add([word, ...subtract(hx, word).sort()].join(' '));
-    return res;
+    let results = Array.from(res);
+    let indexOfSpace = results[0].indexOf(' ');
+    results.sort((a, b) => addUpFrequency(a, indexOfSpace) < addUpFrequency(b, indexOfSpace));
+    return results;
 }
 
 formulas = output => {
@@ -75,11 +121,12 @@ formulas = output => {
         var hx = hash(term.replace(/\W/g, '')),
             equ = term.match(/\w{2,}|\w(?: \w)*/g).join(' + ');
         (grams[hx] || []).forEach(word => {
-            res.push(`${equ} = ${word}`);
+            if (equ.length != word.length) {
+                res.push(`${equ} = ${word}`);
+            }
         });
     });
-
-    return res.sort((a, b) => a.length - b.length);
+    return res;
 };
 
 isWord = word => (grams[hash(word)] || []).indexOf(word) >= 0
