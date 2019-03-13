@@ -99,7 +99,7 @@ isWord = word => (grams[hash(word)] || []).indexOf(word) >= 0
 
 grams = {};
 
-fetch('owl3.txt').then(resp => resp.text()).then(owl => {
+fetch('owl2018.txt').then(resp => resp.text()).then(owl => {
     var start_ts = Date.now();
     owl.match(/\w+/g).forEach(word => {
         var hx = hash(word);
