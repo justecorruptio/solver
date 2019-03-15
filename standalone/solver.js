@@ -45,7 +45,7 @@ snatch = input => {
             var c = w.join('');
             if(c.length > 15) return;
 
-            var combs = letter_combs.slice(max(0, 2 - w.length), 15 - c.length);
+            var combs = letter_combs.slice(max(0, 2 - w.length), 16 - c.length);
 
             combs.forEach(entries => {
                 entries.forEach(l => {
