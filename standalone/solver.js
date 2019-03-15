@@ -40,7 +40,7 @@ snatch = input => {
             j => comb(letters, j).map(l => l.join(''))
         );
 
-    range(0, 4).forEach(i => {
+    range(0, 5).forEach(i => {
         comb(words, i).forEach( w => {
             var c = w.join('');
             if(c.length > 15) return;
