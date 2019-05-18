@@ -97,12 +97,35 @@ grams = {};
     });
 });
 
-cell = (str, cls) => `<cell class="${cls || ''}">${str}</cell>`;
+defs = {};
+
+fetch('def.txt').then(resp => resp.text()).then(file => {
+    file.match(/[^\n]+\n/g).forEach(line => {
+        var [words, def] = line.split('\t');
+        words.split(' ').forEach(word => {
+            defs[word.toUpperCase()] = def;
+        });
+    });
+});
+
+cell = (str, cls) => `<cell onclick="handleClickCell()" class="${cls || ''}">${str}</cell>`;
+
+function handleClickCell() {
+    var match = event.target.innerText.match(/= ([A-Z]+)$/);
+    if(match)
+        showDef(match[1]);
+}
+
+showDef = (word) => {
+    $('def').innerText = defs[word] || 'No definition';
+    $('def').style.display = 'block';
+}
 
 handleClear = () => {
     $('answer').innerHTML = '';
     $('input').value = '';
     $('input').focus();
+    $('def').style.display = 'none';
 }
 
 handleSolve = (checkOnly) => {
@@ -114,10 +137,14 @@ handleSolve = (checkOnly) => {
 
     if(!input) return;
 
+    $('def').style.display = 'none';
+
     input.forEach((word, i) => {
         var good = isWord(word);
-        if(good && checkOnly)
+        if(good && checkOnly) {
             output += cell(`${word} is a word.`, 'ok');
+            showDef(word);
+        }
         else if(!good && word.length > 1)
             output += cell(`${word} is not word!`, 'err');
     })
