@@ -2,5 +2,7 @@ CACHE MANIFEST
 
 ./solver.js
 ./solver.png
-./owl3.txt
+./owl2018_01.txt
+./owl2018_02.txt
+./owl2018_03.txt
 ./

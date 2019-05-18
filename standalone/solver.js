@@ -1,10 +1,5 @@
 String.prototype.sort = function() { return this.split('').sort(); };
 
-freqs = {
-    A: 13, B: 3, C: 3, D: 6, E: 18, F: 3, G: 4, H: 3, I: 12, J: 2, K: 2, L: 5, M: 3,
-    N: 8, O: 11, P: 3, Q: 2, R: 9, S: 6, T: 9, U: 6, V: 3, W: 3, X: 2, Y: 3, Z: 2,
-};
-
 $ = id => document.getElementById(id);
 max = (a, b) => a > b ? a : b;
 range = (l, h) => Array.from({length: h - l}, (x, i) => l + i);
@@ -64,13 +59,6 @@ subtract = (b, a) => {
     return b;
 }
 
-odds = (letters) => {
-    var res = 1;
-    for (var c of letters)
-        res *= freqs[c] / 144;
-    return res - letters.length;
-}
-
 extend = word => {
     var additions = new Set(),
         regex = new RegExp(hash(word).split('').join('.*'));
@@ -79,9 +67,8 @@ extend = word => {
         if(hx.match(regex))
             additions.add(hash(subtract(hx, word)));
     return Array.from(additions)
-        .sort((a, b) => odds(a) < odds(b))
         .map(letters => [word, ...letters.split('')].join(' '));
-}
+};
 
 formulas = output => {
     var res = [];
@@ -92,20 +79,22 @@ formulas = output => {
             res.push(`${equ} = ${word}`);
         });
     });
-    return res;
+    return res.sort((a, b) => a.length - b.length || a > b);
 };
 
 isWord = word => (grams[hash(word)] || []).indexOf(word) >= 0
 
 grams = {};
 
-fetch('owl2018.txt').then(resp => resp.text()).then(owl => {
-    var start_ts = Date.now();
-    owl.match(/\w+/g).forEach(word => {
-        var hx = hash(word);
-        (grams[hx] = grams[hx] || []).push(word);
+[1,2,3].forEach(i => {
+    fetch(`owl2018_0${i}.txt`).then(resp => resp.text()).then(owl => {
+        var start_ts = Date.now();
+        owl.match(/\w+/g).forEach(word => {
+            var hx = hash(word);
+            (grams[hx] = grams[hx] || []).push(word);
+        });
+        $('time').innerText = Date.now() - start_ts;
     });
-    $('time').innerText = Date.now() - start_ts;
 });
 
 cell = (str, cls) => `<cell class="${cls || ''}">${str}</cell>`;
