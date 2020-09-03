@@ -1,0 +1,165 @@
+<!DOCTYPE HTML>
+<!--<html manifest="./app-cache.manifest">-->
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="solver.png" />
+    <link rel="icon" type="image/png" href="solver.png" />
+    <style>
+        body {
+            font-family: Arial,sans-serif;
+        }
+        h1 {
+            margin: 5px;
+            font-weight: 200;
+        }
+        .bordered {
+            border: 1px solid #aaaaaa;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            box-shadow: 0 0 5px #8855aa;
+        }
+        input {
+            font-family: inherit;
+            font-size: 16px;
+            width: calc(100% - 10px);
+            text-transform: uppercase;
+            resize: vertical;
+            margin: 5px;
+            padding: 10px;
+        }
+        button {
+            font-size: 16px;
+            margin: 5px;
+            padding: 5px;
+            color: white;
+            background-color: #777777;
+            cursor: pointer;
+        }
+        button.primary {
+            background-color: #8855aa;
+        }
+        button.secondary {
+            background-color: #aa6e55;
+        }
+        button:hover {
+            box-shadow: 0 0 5px #8855aa;
+        }
+
+        grid {
+            display: flex;
+            flex-direction: column;
+            flex-flow: column wrap;
+            jusify-content: space-between;
+            width: 100%;
+        }
+
+        cell {
+            //width: calc((100% - 50px)/ 12);
+            font-size: 16px;
+            margin-top: 2px;
+            margin-left: 5px;
+            padding: 2px 5px 2px 5px;
+            border-radius: 6px;
+        }
+
+        cell.ok {
+            background-color: #00aa00;
+            color: white;
+        }
+
+        cell.err {
+            background-color: #aa0000;
+            color: white;
+        }
+
+        cell.minor {
+            color: #aaaaaa;
+        }
+
+        cell.hidden {
+            filter: blur(5px);
+            color: #444444;
+        }
+
+        cell.hidden.sorted {
+            filter: none;
+            position: relative;
+        }
+
+        cell.hidden.sorted::after {
+            content: attr(data-hash);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding-left: 5px;
+            background: white;
+        }
+
+        cell.missed {
+            color: #aa0000;
+        }
+
+        cell.got {
+            color: #00aa00;
+        }
+
+        overlay {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: 80px;
+            background-color: #8855aa;
+            color: #ffffff;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #answer {
+            max-height: calc(100vh - 120px);
+        }
+
+        @media (max-width: 800px) {
+            cell{ width: calc(100% - 20px); }
+            #answer {
+                max-height: initial;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+    <input id="input" class="bordered" onkeydown="handleInput(event)"></input>
+    <button class="bordered primary" onclick="handleFind()">
+        Find
+    </button>
+    <button class="bordered secondary" onclick="handleFind('hidden')">
+        Blur
+    </button>
+    <button class="bordered secondary" onclick="handleFind('hidden sorted')">
+        Test
+    </button>
+    <button class="bordered" onclick="handleReveal()">
+        Reveal
+    </button>
+    <button class="bordered" onclick="handleClear()">
+        Reset
+    </button>
+    <span id="count"></span>
+    <grid id="answer"></grid>
+    <script src="solver.js"></script>
+</body>
+
+</html>
