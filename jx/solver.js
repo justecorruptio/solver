@@ -22,13 +22,14 @@ cell = (str, cls, word, addHash) => ( `<cell
     ${addHash?`data-hash="${hash(word)}"`:''}
 >${str}</cell>`);
 
-handleFind = (hidden) => {
+handleFind = () => {
     var input = $('#input').value.toUpperCase(),
         found = [],
         res = [],
         output = '',
         regex,
-        clauses;
+        clauses,
+        classes;
 
     if(!input) return;
 
@@ -50,16 +51,24 @@ handleFind = (hidden) => {
                 return matches[0].length < (len[1] | 0);
             } else if (len = clause.match(/^>(\d+)$/)) {
                 return matches[0].length > (len[1] | 0);
+            } else if (len = clause.match(/^=(\d+)$/)) {
+                return matches[0].length == (len[1] | 0);
             } else {
                 return ALL_DICT[word];
             }
         })
     )).map(x => x[0]);
 
-    output += res.map(x => cell(x, hidden? hidden: '', x, 1)).join('');
+    classes = ($('#checkBlur').checked ? 'blur hidden': '') +
+        ($('#checkAlpha').checked ? 'alpha hidden': '');
+
+    if ( $('#checkOrder').checked ) {
+        res.sort((a, b) => hash(a) > hash(b));
+    }
+    output += res.map(x => cell(x, classes, x, 1)).join('');
 
     $('#answer').innerHTML = output || cell('No solution!');
-    if(hidden) {
+    if(classes) {
         $('#input').value = '';
     }
     $('#input').focus();
@@ -88,16 +97,14 @@ handleInput = (event) => {
     }
 };
 
+handleFocus = (event, height) => {
+    let vh = window.innerHeight - height;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+};
+
 handleReveal = () => {
     $$('cell.hidden').forEach($el => {
         $el.classList.remove('hidden');
         $el.classList.add('missed');
     });
-};
-
-handleClear = () => {
-    $('#answer').innerHTML = '';
-    $('#input').value = '';
-    $('#input').focus();
-    $("#count").innerHTML = '';
 };
