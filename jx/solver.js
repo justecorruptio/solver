@@ -2,6 +2,8 @@ String.prototype.sort = function() { return this.split('').sort(); };
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
 
+LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 ALL_WORDS = [];
 ALL_DICT = {};
 
@@ -22,6 +24,39 @@ cell = (str, cls, word, addHash) => ( `<cell
     ${addHash?`data-hash="${hash(word)}"`:''}
 >${str}</cell>`);
 
+annotate = (word) => {
+    var pre = '',
+        post = '',
+        preDel = '',
+        postDel = '',
+        hidden;
+
+    LETTERS.forEach((l) => {
+        if (ALL_DICT[l + word]) {
+            pre += l;
+        }
+        if (ALL_DICT[word + l]) {
+            post += l;
+        }
+    });
+
+    if(ALL_DICT[word.substring(1)]) {
+        preDel = '●';
+    }
+
+    if(ALL_DICT[word.substring(0, word.length - 1)]) {
+        postDel = '●';
+    }
+
+    hidden = $('#checkAnnotate').checked ? '': 'hidden';
+
+    return `
+        <small class="annotation ${hidden}">${pre}${preDel}</small>
+        ${word}
+        <small class="annotation ${hidden}">${postDel}${post}</small>
+    `;
+}
+
 handleFind = () => {
     var input = $('#input').value.toUpperCase(),
         found = [],
@@ -29,11 +64,12 @@ handleFind = () => {
         output = '',
         regex,
         clauses,
-        classes;
+        classes,
+        doAnnotate;
 
     if(!input) return;
 
-    [regex, ...clauses] = input.match(/([^ ]+)/g);
+    [regex, ...clauses] = input.match(/([^ \/]+)/g);
 
     regex = regex.replace('@', '(.+)');
     regex = `^(?:${regex})$`;
@@ -62,10 +98,11 @@ handleFind = () => {
     classes = ($('#checkBlur').checked ? 'blur hidden': '') +
         ($('#checkAlpha').checked ? 'alpha hidden': '');
 
-    if ( $('#checkOrder').checked ) {
-        res.sort((a, b) => hash(a) > hash(b));
+    if ( $('#checkAlpha').checked ) {
+        res.sort((a, b) => (`${a.length}`.padStart(2, '0') + hash(a) > `${b.length}`.padStart(2, '0') + hash(b)));
     }
-    output += res.map(x => cell(x, classes, x, 1)).join('');
+
+    output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
 
     $('#answer').innerHTML = output || cell('No solution!');
     if(classes) {
@@ -87,15 +124,22 @@ handleInput = (event) => {
         if($el = $(`cell[data-word="${input}"]`)) {
             $el.classList.remove('hidden');
             $el.classList.add('got');
+            $$('.last-got').forEach(x=>x.classList.remove('last-got'));
+            $el.classList.add('last-got');
             $("#count").innerHTML = $$('cell.hidden').length;
-        }
-        else {
+        } else if (ALL_DICT[input]) {
+            $('#answer').innerHTML += cell(input, 'err good');
+        } else {
             $('#answer').innerHTML += cell(input, 'err');
         }
         $('#input').value = '';
         return false;
     }
 };
+
+handleAnnotation = (event) => {
+    $$('.annotation').forEach(x => x.classList.toggle('hidden'));
+}
 
 handleFocus = (event, height) => {
     let vh = window.innerHeight - height;
