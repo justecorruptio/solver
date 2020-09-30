@@ -198,12 +198,9 @@
     onfocus="handleFocus(event, 320)"
     onblur="handleFocus(event, 110)"
     ></input>
-    <button class="button bordered primary" onclick="handleFind()">Find</button>
-
-    <input type="checkbox" id="checkBlur"></input>
-    <label for="checkBlur" class="button bordered">🤦<span class="wide"> Blur</span></label>
-    <input type="checkbox" id="checkAlpha"></input>
-    <label for="checkAlpha" class="button bordered">🔤<span class="wide"> Alpha</span></label>
+    <button class="button bordered primary" onclick="handleFind()">Show</button>
+    <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
+    <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
 
     <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()"></input>
     <label for="checkAnnotate" class="button bordered">🖊️<span class="wide"> Annotate</span></label>

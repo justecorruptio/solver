@@ -57,14 +57,14 @@ annotate = (word) => {
     `;
 }
 
-handleFind = () => {
+handleFind = (type) => {
     var input = $('#input').value.toUpperCase(),
         found = [],
         res = [],
         output = '',
         regex,
         clauses,
-        classes,
+        classes = '',
         doAnnotate;
 
     if(!input) return;
@@ -95,19 +95,18 @@ handleFind = () => {
         })
     )).map(x => x[0]);
 
-    classes = ($('#checkBlur').checked ? 'blur hidden': '') +
-        ($('#checkAlpha').checked ? 'alpha hidden': '');
-
-    if ( $('#checkAlpha').checked ) {
+    if (type == 'blur') {
+        classes = 'blur hidden';
+    }
+    else if (type == 'alpha') {
+        classes = 'alpha hidden';
         res.sort((a, b) => (`${a.length}`.padStart(2, '0') + hash(a) > `${b.length}`.padStart(2, '0') + hash(b)));
     }
 
     output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
 
     $('#answer').innerHTML = output || cell('No solution!');
-    if(classes) {
-        $('#input').value = '';
-    }
+
     $('#input').focus();
     $("#count").innerHTML = $$('cell').length;
 
