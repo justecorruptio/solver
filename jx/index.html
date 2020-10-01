@@ -18,11 +18,37 @@
             font-weight: 200;
         }
         small {
-            color: #666666;
+            color: #6666aa;
+            font-size: 10px;
         }
 
-        .annotation.hidden {
+        .annotation-container {
+            position: relative;
+            display: inline-block;
+            pointer-events: none;
+        }
+
+        .annotation-container.hidden small,
+        cell.hidden .annotation-container small {
             display: none;
+        }
+
+        cell:not(.hidden) .annotation-container:not(.hidden) {
+            margin-left: 30px;
+            margin-right: 30px;
+        }
+
+        .annotation {
+            position: absolute;
+            top: 4px;
+        }
+
+        .annotation.left {
+            right: calc(100% + 3px);
+        }
+
+        .annotation.right {
+            left: calc(100% + 3px);
         }
 
         .bordered {

@@ -82,9 +82,11 @@ annotate = (word) => {
     hidden = $('#checkAnnotate').checked ? '': 'hidden';
 
     return `
-        <small class="annotation ${hidden}">${pre}${preDel}</small>
+        <div class="annotation-container ${hidden}">
+        <small class="annotation left">${pre}${preDel}</small>
         ${word}
-        <small class="annotation ${hidden}">${postDel}${post}</small>
+        <small class="annotation right">${postDel}${post}</small>
+        </div>
     `;
 }
 
@@ -174,7 +176,7 @@ handleInput = (event) => {
 };
 
 handleAnnotation = (event) => {
-    $$('.annotation').forEach(x => x.classList.toggle('hidden'));
+    $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
 }
 
 handleFocus = (event, height) => {
@@ -190,8 +192,9 @@ handleReveal = () => {
 };
 
 handleClickCell = (event) => {
-    var attr = event.target.attributes['data-word'];
-    if(attr) {
+    var target = event.target,
+        attr = target.attributes['data-word'];
+    if(attr && !target.classList.contains('hidden')) {
         showDef(attr.value);
     }
 }
