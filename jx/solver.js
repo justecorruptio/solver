@@ -16,6 +16,17 @@ ALL_DICT = {};
     });
 });
 
+DEFS = {};
+
+fetch('def.txt').then(resp => resp.text()).then(file => {
+    file.match(/[^\n]+\n/g).forEach(line => {
+        var [words, def] = line.split('\t');
+        words.split(' ').forEach(word => {
+            DEFS[word.toUpperCase()] = def;
+        });
+    });
+});
+
 ulu = (pattern) => {
     var count = 0,
         any = false;
@@ -41,6 +52,7 @@ cell = (str, cls, word, addHash) => ( `<cell
     class="${cls || ''}"
     ${word?`data-word="${word}"`:''}
     ${addHash?`data-hash="${hash(word)}"`:''}
+    onclick="handleClickCell(event)"
 >${str}</cell>`);
 
 annotate = (word) => {
@@ -176,3 +188,15 @@ handleReveal = () => {
         $el.classList.add('missed');
     });
 };
+
+handleClickCell = (event) => {
+    var attr = event.target.attributes['data-word'];
+    if(attr) {
+        showDef(attr.value);
+    }
+}
+
+showDef = (word) => {
+    $('#def').innerText = DEFS[word] || 'No definition';
+    $('#def').style.display = 'block';
+}
