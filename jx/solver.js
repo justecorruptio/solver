@@ -16,6 +16,25 @@ ALL_DICT = {};
     });
 });
 
+ulu = (pattern) => {
+    var count = 0,
+        any = false;
+
+    pattern = pattern.replace(/[?]/g, x=>(count++, ''));
+    pattern = pattern.replace(/[@]/g, x=>(any=true, ''));
+    pattern = new RegExp(['^', ...pattern.sort(), '$'].join('(.*)'), 'i');
+
+    return (word) => {
+        var hx = hash(word),
+            result = hx.replace(pattern, (...v)=>v.slice(1,-2).join(''));
+
+        if (result != hx && (any || result.length == count)) {
+            return [word];
+        }
+        return null;
+    }
+}
+
 hash = word => word.sort().join('');
 
 cell = (str, cls, word, addHash) => ( `<cell
@@ -65,17 +84,23 @@ handleFind = (type) => {
         regex,
         clauses,
         classes = '',
-        doAnnotate;
+        match_func;
 
     if(!input) return;
 
     [regex, ...clauses] = input.match(/([^ \/]+)/g);
 
-    regex = regex.replace(/@/g, '(.+)');
-    regex = `^(?:${regex})$`;
+
+    if ($('#checkRegex').checked) {
+        regex = regex.replace(/@/g, '(.+)');
+        regex = `^(?:${regex})$`;
+        match_func = (word) => word.match(regex);
+    } else {
+        match_func = ulu(regex);
+    }
 
     ALL_WORDS.forEach(word => {
-        if(matches = word.match(regex)) {
+        if(matches = match_func(word)) {
             found.push(matches);
         }
     });

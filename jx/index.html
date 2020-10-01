@@ -36,11 +36,13 @@
         #input {
             font-family: inherit;
             font-size: 16px;
-            width: calc(100% - 10px);
             text-transform: uppercase;
-            resize: vertical;
-            margin: 5px;
+            width: calc(100% - 50px);
             padding: 10px;
+        }
+        .input-bar {
+            width: calc(100% - 10px);
+            margin: 3px;
         }
         .button {
             font-size: 16px;
@@ -107,17 +109,6 @@
         cell.hidden.blur {
             filter: blur(5px);
             color: #444444;
-        }
-
-        cell.hidden.blur::after {
-            content: attr(data-word);
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding-left: 5px;
-            background: white;
         }
 
         cell.hidden.alpha {
@@ -193,11 +184,16 @@
 </head>
 
 <body>
-    <input id="input" class="bordered"
-    onkeydown="handleInput(event)"
-    onfocus="handleFocus(event, 320)"
-    onblur="handleFocus(event, 110)"
-    ></input>
+    <div class="input-bar">
+        <input type="checkbox" id="checkRegex"></input>
+        <label for="checkRegex" class="button bordered">/re/</label>
+
+        <input id="input" class="bordered"
+            onkeydown="handleInput(event)"
+            onfocus="handleFocus(event, 320)"
+            onblur="handleFocus(event, 110)"
+        ></input>
+    </div>
     <button class="button bordered primary" onclick="handleFind()">Show</button>
     <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
     <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
