@@ -191,7 +191,7 @@
         @media (max-width: 800px) {
             #answer {
                 height: var(--vh, 1vh);
-                width: 100vw;
+                width: calc(100vw - 20px);
                 overflow-x: auto;
             }
             html, body {
@@ -216,7 +216,7 @@
 
         <input id="input" class="bordered"
             onkeydown="handleInput(event)"
-            onfocus="handleFocus(event, 320)"
+            onfocus="handleFocus(event, 340)"
             onblur="handleFocus(event, 110)"
         ></input>
     </div>

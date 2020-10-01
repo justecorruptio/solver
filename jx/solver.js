@@ -102,7 +102,7 @@ handleFind = (type) => {
 
     if(!input) return;
 
-    [regex, ...clauses] = input.match(/([^ \/]+)/g);
+    [regex, ...clauses] = input.match(/([^ :]+)/g);
 
 
     if ($('#checkRegex').checked) {
@@ -149,6 +149,7 @@ handleFind = (type) => {
     $('#input').focus();
     $("#count").innerHTML = $$('cell').length;
 
+    location.hash = input.replace(/ /g, ':');
 };
 
 handleInput = (event) => {
@@ -202,4 +203,8 @@ handleClickCell = (event) => {
 showDef = (word) => {
     $('#def').innerText = DEFS[word] || 'No definition';
     $('#def').style.display = 'block';
+}
+
+if( location.hash ) {
+    $('#input').value = decodeURIComponent(location.hash.replace(/^#/, ''));
 }
