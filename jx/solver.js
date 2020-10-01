@@ -71,7 +71,7 @@ handleFind = (type) => {
 
     [regex, ...clauses] = input.match(/([^ \/]+)/g);
 
-    regex = regex.replace('@', '(.+)');
+    regex = regex.replace(/@/g, '(.+)');
     regex = `^(?:${regex})$`;
 
     ALL_WORDS.forEach(word => {
