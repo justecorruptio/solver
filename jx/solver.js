@@ -134,7 +134,7 @@ handleFind = (type) => {
 
     if(!input) return;
 
-    if (input.match(/[^a-zA-Z ?@]/)) {
+    if (input.match(/[^a-zA-Z ?@:]/)) {
         $('#checkRegex').checked = true;
     }
 
@@ -187,6 +187,14 @@ handleFind = (type) => {
     location.hash = input.replace(/ /g, ':');
 };
 
+getCell = ($el) => {
+    $el.classList.remove('hidden');
+    $el.classList.add('got');
+    $$('.last-got').forEach(x=>x.classList.remove('last-got'));
+    $el.classList.add('last-got');
+    $("#count").innerHTML = $$('cell.hidden').length;
+}
+
 handleInput = (event) => {
     var input = $('#input').value.toUpperCase();
 
@@ -196,11 +204,7 @@ handleInput = (event) => {
         if(!input)
             return false;
         if($el = $(`cell[data-word="${input}"]`)) {
-            $el.classList.remove('hidden');
-            $el.classList.add('got');
-            $$('.last-got').forEach(x=>x.classList.remove('last-got'));
-            $el.classList.add('last-got');
-            $("#count").innerHTML = $$('cell.hidden').length;
+            getCell($el);
         } else if (ALL_DICT[input]) {
             $('#answer').innerHTML += cell(input, 'err good');
         } else {
@@ -235,6 +239,9 @@ handleClickCell = (event) => {
     }
     if(target.classList.contains('err')) {
         target.remove();
+    }
+    if(target.classList.contains('hidden')) {
+        getCell(target);
     }
 }
 
