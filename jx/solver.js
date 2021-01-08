@@ -130,6 +130,7 @@ handleFind = (type) => {
         match_func;
 
     input = $('#input').value = $('#input').value.replace(/^\s+|\s+$/g, '');
+    input = input.toUpperCase();
 
     if(!input) return;
 
@@ -138,7 +139,6 @@ handleFind = (type) => {
     }
 
     [regex, ...clauses] = input.match(/([^ :]+)/g);
-
 
     if ($('#checkRegex').checked) {
         regex = regex.replace(/@/g, '(.+)');
@@ -232,6 +232,9 @@ handleClickCell = (event) => {
         attr = target.attributes['data-word'];
     if(attr && !target.classList.contains('hidden')) {
         showDef(attr.value);
+    }
+    if(target.classList.contains('err')) {
+        target.remove();
     }
 }
 
