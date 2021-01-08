@@ -18,7 +18,7 @@
             font-weight: 200;
         }
         small {
-            color: #6666aa;
+            color: #6666cc;
             font-size: 10px;
         }
 
@@ -40,7 +40,7 @@
 
         .annotation {
             position: absolute;
-            top: 4px;
+            top: 5px;
         }
 
         .annotation.left {
@@ -49,6 +49,20 @@
 
         .annotation.right {
             left: calc(100% + 3px);
+        }
+
+        .annotation.rank {
+            right: calc(100% + 3px);
+            top: 1px;
+            color: #ff4444;
+            font-size: 4px;
+        }
+
+        .annotation.pos {
+            left: calc(100% + 3px);
+            top: -2px;
+            color: #cccccc;
+            font-size: 8px;
         }
 
         .bordered {
@@ -69,6 +83,8 @@
         .input-bar {
             width: calc(100% - 10px);
             margin: 3px;
+        }
+        .input-bar {
         }
         .button {
             font-size: 16px;
@@ -214,7 +230,7 @@
         <input type="checkbox" id="checkRegex"></input>
         <label for="checkRegex" class="button bordered">/re/</label>
 
-        <input id="input" class="bordered"
+        <input id="input" class="bordered" disabled="disabled"
             onkeydown="handleInput(event)"
             onfocus="handleFocus(event, 340)"
             onblur="handleFocus(event, 110)"
@@ -224,7 +240,7 @@
     <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
     <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
 
-    <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()"></input>
+    <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()" checked=checked></input>
     <label for="checkAnnotate" class="button bordered">🖊️<span class="wide"> Annotate</span></label>
 
     <button class="button bordered secondary" onclick="handleReveal()">

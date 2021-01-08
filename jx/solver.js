@@ -4,27 +4,49 @@ $$ = x => document.querySelectorAll(x);
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+LOADED = 0;
+check_load = () => {
+    LOADED ++;
+    if(LOADED == 3) {
+        $('#input').disabled = false;
+    }
+}
+
 ALL_WORDS = [];
 ALL_DICT = {};
 
-[1, 2, 3].forEach(i => {
-    fetch(`owl2018_0${i}.txt`).then(resp => resp.text()).then(owl => {
-        owl.match(/\w+/g).forEach(word => {
-            ALL_WORDS.push(word);
-            ALL_DICT[word] = true;
-        });
+fetch(`nwl2018.txt`).then(resp => resp.text()).then(owl => {
+    owl.match(/\w+/g).forEach(word => {
+        ALL_WORDS.push(word);
+        ALL_DICT[word] = true;
     });
+    check_load();
 });
 
 DEFS = {};
+POS = {};
 
 fetch('def.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
-        var [words, def] = line.split('\t');
+        var [words, def] = line.split('\t'),
+            pos = (def.match(/[a-z]+/) || ['?'])[0];
         words.split(' ').forEach(word => {
-            DEFS[word.toUpperCase()] = def;
+            word = word.toUpperCase();
+            DEFS[word] = def;
+            (POS[word] = POS[word] || {})[pos] = 1;
         });
     });
+    check_load();
+});
+
+RANKS = {};
+
+fetch('ranks.txt').then(resp => resp.text()).then(file => {
+    file.match(/[^\n]+\n/g).forEach(line => {
+        var [hx, rank] = line.split('\t');
+        RANKS[hx] = rank | 0;
+    });
+    check_load();
 });
 
 ulu = (pattern) => {
@@ -60,7 +82,8 @@ annotate = (word) => {
         post = '',
         preDel = '',
         postDel = '',
-        hidden;
+        hidden,
+        rank;
 
     LETTERS.forEach((l) => {
         if (ALL_DICT[l + word]) {
@@ -80,18 +103,24 @@ annotate = (word) => {
     }
 
     hidden = $('#checkAnnotate').checked ? '': 'hidden';
+    rank = (RANKS[hash(word)] || 99999) / 1000;
+    rank = rank < 15 ? '' : rank < 25 ? '★' : rank < 50 ? '★★' : '★★★';
+    pos = Object.keys(POS[word] || {}).join('&nbsp;');
 
     return `
         <div class="annotation-container ${hidden}">
         <small class="annotation left">${pre}${preDel}</small>
+        <small class="annotation rank">${rank}</small>
         ${word}
         <small class="annotation right">${postDel}${post}</small>
+        <small class="annotation pos">${pos}</small>
         </div>
     `;
 }
 
 handleFind = (type) => {
-    var input = $('#input').value.toUpperCase(),
+
+    var input,
         found = [],
         res = [],
         output = '',
@@ -100,7 +129,13 @@ handleFind = (type) => {
         classes = '',
         match_func;
 
+    input = $('#input').value = $('#input').value.replace(/^\s+|\s+$/g, '');
+
     if(!input) return;
+
+    if (input.match(/[^a-zA-Z ?@]/)) {
+        $('#checkRegex').checked = true;
+    }
 
     [regex, ...clauses] = input.match(/([^ :]+)/g);
 
