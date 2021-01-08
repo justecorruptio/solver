@@ -168,12 +168,12 @@
             background: white;
         }
 
-        cell.missed {
-            color: #aa0000;
-        }
-
         cell.got {
             color: #00aa00;
+        }
+
+        cell.missed {
+            color: #aa0000;
         }
 
         cell.last-got {
@@ -234,7 +234,7 @@
             onkeydown="handleInput(event)"
             onfocus="handleFocus(event, 340)"
             onblur="handleFocus(event, 110)"
-            placeholder="<re|ulu>:[<=>]len"
+            zplaceholder="<re|ulu>:re1..9:[<=>]len:[-+]rank:?limit"
         ></input>
     </div>
     <button class="button bordered primary" onclick="handleFind()">Show</button>

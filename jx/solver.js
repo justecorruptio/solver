@@ -1,4 +1,5 @@
 String.prototype.sort = function() { return this.split('').sort(); };
+String.prototype.zlength = function() { return `${this.length}`.padStart(2, '0') };
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
 
@@ -156,25 +157,44 @@ handleFind = (type) => {
 
     res = found.filter(matches => (
         clauses.every(clause => {
-            var word = clause.replace(/\d/g, x => matches[x | 0]);
+            var word = clause.replace(/\d/g, x => matches[x | 0]),
+                len;
             if (len = clause.match(/^<(\d+)$/)) {
-                return matches[0].length < (len[1] | 0);
+                return matches[0].length <=(len[1] | 0);
             } else if (len = clause.match(/^>(\d+)$/)) {
-                return matches[0].length > (len[1] | 0);
+                return matches[0].length >=(len[1] | 0);
             } else if (len = clause.match(/^=(\d+)$/)) {
                 return matches[0].length == (len[1] | 0);
+            } else if (clause.match(/^[?\-+]/)){
+                return true
             } else {
                 return ALL_DICT[word];
             }
         })
     )).map(x => x[0]);
 
+    clauses.forEach(clause => {
+        var arg;
+        if (arg = clause.match(/^[?](\d+)$/)) {
+            res.sort((a, b) => Math.random() > .5);
+            res = res.slice(0, arg[1] | 0);
+        }
+        if (arg = clause.match(/^[\-](\d+)$/)) {
+            res = res.filter(word => (RANKS[hash(word)] || 99999) <= (arg[1] | 0))
+        }
+        if (arg = clause.match(/^[+](\d+)$/)) {
+            res = res.filter(word => (RANKS[hash(word)] || 99999) >= (arg[1] | 0))
+        }
+    })
+
+    res.sort((a, b) => a.zlength + a > b.zlength + b);
+
     if (type == 'blur') {
         classes = 'blur hidden';
     }
     else if (type == 'alpha') {
         classes = 'alpha hidden';
-        res.sort((a, b) => (`${a.length}`.padStart(2, '0') + hash(a) > `${b.length}`.padStart(2, '0') + hash(b)));
+        res.sort((a, b) => a.zlength + hash(a) > b.zlength + hash(b));
     }
 
     output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
@@ -242,6 +262,8 @@ handleClickCell = (event) => {
     }
     if(target.classList.contains('hidden')) {
         getCell(target);
+        target.classList.remove('got');
+        target.classList.add('missed');
     }
 }
 
