@@ -16,8 +16,9 @@ check_load = () => {
 ALL_WORDS = [];
 ALL_DICT = {};
 
-fetch(`nwl2018.txt`).then(resp => resp.text()).then(owl => {
+fetch(`nwl2020.txt`).then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).forEach(word => {
+        word = word.toUpperCase();
         ALL_WORDS.push(word);
         ALL_DICT[word] = true;
     });
