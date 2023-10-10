@@ -188,14 +188,14 @@ handleFind = (type) => {
         }
     })
 
-    res.sort((a, b) => a.zlength + a > b.zlength + b);
+    res.sort((a, b) => a.zlength() + a > b.zlength() + b);
 
     if (type == 'blur') {
         classes = 'blur hidden';
     }
     else if (type == 'alpha') {
         classes = 'alpha hidden';
-        res.sort((a, b) => a.zlength + hash(a) > b.zlength + hash(b));
+        res.sort((a, b) => a.zlength() + hash(a) > b.zlength() + hash(b));
     }
 
     output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
@@ -205,7 +205,7 @@ handleFind = (type) => {
     $('#input').focus();
     $("#count").innerHTML = $$('cell').length;
 
-    location.hash = input.replace(/ /g, ':');
+    location.hash = ($('#checkRegex').checked?'R':'U') + ',' + input.replace(/ /g, ':');
 };
 
 getCell = ($el) => {
@@ -274,5 +274,10 @@ showDef = (word) => {
 }
 
 if( location.hash ) {
-    $('#input').value = decodeURIComponent(location.hash.replace(/^#/, ''));
+    let hash = decodeURIComponent(location.hash.replace(/^#/, '')),
+        match = hash.match(/([UR]),(.*)/);
+    if(match) {
+        $('#checkRegex').checked = match[1] == 'R';
+        $('#input').value = match[2];
+    }
 }
