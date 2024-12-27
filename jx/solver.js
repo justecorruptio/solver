@@ -1,5 +1,11 @@
 String.prototype.sort = function() { return this.split('').sort(); };
 String.prototype.zlength = function() { return `${this.length}`.padStart(2, '0') };
+DOMTokenList.prototype._add = DOMTokenList.prototype.add;
+DOMTokenList.prototype.add = function(v) {this._add(v); return this;}
+
+DOMTokenList.prototype._remove = DOMTokenList.prototype.remove;
+DOMTokenList.prototype.remove = function(v) {this._remove(v); return this;}
+
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
 
@@ -16,7 +22,7 @@ check_load = () => {
 ALL_WORDS = [];
 ALL_DICT = {};
 
-fetch(`nwl2020.txt`).then(resp => resp.text()).then(owl => {
+fetch(`nwl2023.txt`).then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).forEach(word => {
         word = word.toUpperCase();
         ALL_WORDS.push(word);
@@ -208,11 +214,9 @@ handleFind = (type) => {
     location.hash = ($('#checkRegex').checked?'R':'U') + ',' + input.replace(/ /g, ':');
 };
 
-getCell = ($el) => {
-    $el.classList.remove('hidden');
-    $el.classList.add('got');
+getCell = ($el, success) => {
     $$('.last-got').forEach(x=>x.classList.remove('last-got'));
-    $el.classList.add('last-got');
+    $el.classList.remove('hidden').add(success?'got':'missed').add('last-got');
     $("#count").innerHTML = $$('cell.hidden').length;
 }
 
@@ -225,7 +229,7 @@ handleInput = (event) => {
         if(!input)
             return false;
         if($el = $(`cell[data-word="${input}"]`)) {
-            getCell($el);
+            getCell($el, true);
         } else if (ALL_DICT[input]) {
             $('#answer').innerHTML += cell(input, 'err good');
         } else {
@@ -247,8 +251,7 @@ handleFocus = (event, height) => {
 
 handleReveal = () => {
     $$('cell.hidden').forEach($el => {
-        $el.classList.remove('hidden');
-        $el.classList.add('missed');
+        $el.classList.remove('hidden').add('missed');
     });
 };
 
@@ -262,9 +265,7 @@ handleClickCell = (event) => {
         target.remove();
     }
     if(target.classList.contains('hidden')) {
-        getCell(target);
-        target.classList.remove('got');
-        target.classList.add('missed');
+        getCell(target, false);
     }
 }
 
