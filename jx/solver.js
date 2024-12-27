@@ -19,14 +19,11 @@ check_load = () => {
     }
 }
 
-ALL_WORDS = [];
 ALL_DICT = {};
 
-fetch(`nwl2023.txt`).then(resp => resp.text()).then(owl => {
+fetch('nwl2023.txt').then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).forEach(word => {
-        word = word.toUpperCase();
-        ALL_WORDS.push(word);
-        ALL_DICT[word] = true;
+        ALL_DICT[word.toUpperCase()] = true;
     });
     check_load();
 });
@@ -36,8 +33,13 @@ POS = {};
 
 fetch('def.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
-        var [words, def] = line.split('\t'),
-            pos = (def.match(/[a-z]+/) || ['?'])[0];
+        try{
+        var [_, words, def, pos] = line.match(/([^\t]+)\t([ A-Z]+([a-z]+)[^\n]+)\n/);
+        }catch{
+            console.log(line);
+        }
+        //var [words, def] = line.split('\t'),
+        //    pos = (def.match(/[a-z]+/) || ['?'])[0];
         words.split(' ').forEach(word => {
             word = word.toUpperCase();
             DEFS[word] = def;
@@ -156,7 +158,7 @@ handleFind = (type) => {
         match_func = ulu(regex);
     }
 
-    ALL_WORDS.forEach(word => {
+    Object.keys(ALL_DICT).forEach(word => {
         if(matches = match_func(word)) {
             found.push(matches);
         }

@@ -15289,7 +15289,7 @@ floppy floppies	FLOPPY n pl. -PIES a type of computer disk
 flora floras florae	FLORA n pl. -RAS or -RAE the plant life of a particular region
 floral florally	FLORAL adj pertaining to flowers FLORALLY adv
 floral florals	FLORAL n pl. -S a design in which flowers predominate
-floreat	floreated floreating floreats FLOREAT v -ED, -ING, -S may he/she/it flourish
+floreat floreated floreating floreats	FLOREAT v -ED, -ING, -S may he/she/it flourish
 florence florences	FLORENCE n pl. -S florin
 floret florets	FLORET n pl. -S a small flower
 florid floridly	FLORID adj ruddy FLORIDLY adv
@@ -20798,7 +20798,7 @@ irrigate irrigated irrigating irrigates	IRRIGATE v -GATED, -GATING, -GATES to su
 irritant irritants	IRRITANT n pl. -S something that irritates
 irritate irritated irritating irritates	IRRITATE v -TATED, -TATING, -TATES to excite to impatience or anger
 irrupt irrupted irrupting irrupts	IRRUPT v -ED, -ING, -S to rush in forcibly
-is	IS present 3d person sing. of be
+is	IS v present 3d person sing. of be
 isagoge isagoges	ISAGOGE n pl. -S a type of introduction to a branch of study
 isagogic isagogics	ISAGOGIC n pl. -S a branch of theology
 isarithm isarithms	ISARITHM n pl. -S an isopleth
@@ -46023,7 +46023,7 @@ warty wartier wartiest	WARTY adj WARTIER, WARTIEST covered with warts
 warwork warworks	WARWORK n pl. -S work done during a war
 warworn	WARWORN adj showing the effects of war
 wary warier wariest	WARY adj WARIER, WARIEST watchful
-was	WAS 1st and 3d person sing. past indicative of be
+was	WAS v 1st and 3d person sing. past indicative of be
 wasabi wasabis	WASABI n pl. -S a pungent herb
 wash washed washing washes	WASH v -ED, -ING, -ES to cleanse by immersing in or applying a liquid
 washable washables	WASHABLE n pl. -S something that can be washed without damage
@@ -47215,7 +47215,7 @@ yapock yapocks	YAPOCK n pl. -S an aquatic mammal
 yapok yapoks	YAPOK n pl. -S yapock
 yapon yapons	YAPON n pl. -S yaupon
 yapper yappers	YAPPER n pl. -S one that yaps
-yappy yappier yappiest	adj YAPPIER, YAPPIEST inclined to yap
+yappy yappier yappiest	YAP adj YAPPIER, YAPPIEST inclined to yap
 yar	YAR adj yare
 yarak yaraks	YARAK n pl. -S a fit condition for hunting -- used of a hawk
 yard yarded yarding yards	YARD v -ED, -ING, -S to put in a yard (a tract of ground adjacent to a building)
