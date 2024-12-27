@@ -33,15 +33,8 @@ POS = {};
 
 fetch('def.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
-        try{
         var [_, words, def, pos] = line.match(/([^\t]+)\t([ A-Z]+([a-z]+)[^\n]+)\n/);
-        }catch{
-            console.log(line);
-        }
-        //var [words, def] = line.split('\t'),
-        //    pos = (def.match(/[a-z]+/) || ['?'])[0];
-        words.split(' ').forEach(word => {
-            word = word.toUpperCase();
+        words.toUpperCase().split(' ').forEach(word => {
             DEFS[word] = def;
             (POS[word] = POS[word] || {})[pos] = 1;
         });
@@ -71,7 +64,7 @@ ulu = (pattern) => {
         var hx = hash(word),
             result = hx.replace(pattern, (...v)=>v.slice(1,-2).join(''));
 
-        if (result != hx && (any || result.length == count)) {
+        if (any || result.length == count) {
             return [word];
         }
         return null;
