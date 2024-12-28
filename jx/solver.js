@@ -1,10 +1,10 @@
-String.prototype.sort = function() { return this.split('').sort(); };
-String.prototype.zlength = function() { return `${this.length}`.padStart(2, '0') };
+Object.prototype.keys = function(){return Object.keys(this)};
+String.prototype.sort = function() {return this.split('').sort()};
+String.prototype.zlength = function() {return `${this.length}`.padStart(2, '0')};
 DOMTokenList.prototype._add = DOMTokenList.prototype.add;
-DOMTokenList.prototype.add = function(v) {this._add(v); return this;}
-
+DOMTokenList.prototype.add = function(v) {this._add(v); return this};
 DOMTokenList.prototype._remove = DOMTokenList.prototype.remove;
-DOMTokenList.prototype.remove = function(v) {this._remove(v); return this;}
+DOMTokenList.prototype.remove = function(v) {this._remove(v); return this};
 
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
@@ -15,16 +15,12 @@ LOADED = 0;
 checkLoad = () => $('#input').disabled = ++LOADED != 3;
 
 ALL = {};
-
 fetch('nwl2023.txt').then(resp => resp.text()).then(file => {
-    file.match(/\w+/g).forEach(word => {
-        ALL[word.toUpperCase()] = true;
-    });
+    file.match(/\w+/g).forEach(word => ALL[word.toUpperCase()] = true);
 }).then(checkLoad);
 
 DEFS = {};
 POS = {};
-
 fetch('def.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
         var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
@@ -36,7 +32,6 @@ fetch('def.txt').then(resp => resp.text()).then(file => {
 }).then(checkLoad);
 
 RANKS = {};
-
 fetch('ranks.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
         var [hx, rank] = line.split('\t');
@@ -53,11 +48,9 @@ ulu = (pattern) => {
     pattern = new RegExp(['^', ...pattern.sort(), '$'].join('(.*)'), 'i');
 
     return (word) => {
-        var result = hash(word).replace(pattern, (...v)=>v.slice(1,-2).join(''));
-        if (any || result.length == count) {
-            return [word];
-        }
-        return null;
+        var hx = hash(word),
+            result = hx.replace(pattern, (...v)=>v.slice(1,-2).join(''));
+        return result != hx && (any || result.length == count)? [word]: null;
     }
 }
 
@@ -79,26 +72,17 @@ annotate = (word) => {
         rank;
 
     LETTERS.forEach((l) => {
-        if (ALL[l + word]) {
-            pre += l;
-        }
-        if (ALL[word + l]) {
-            post += l;
-        }
+        if(ALL[l + word]) pre += l;
+        if(ALL[word + l]) post += l;
     });
 
-    if(ALL[word.substring(1)]) {
-        preDel = '●';
-    }
-
-    if(ALL[word.substring(0, word.length - 1)]) {
-        postDel = '●';
-    }
+    if(ALL[word.substring(1)]) preDel = '●';
+    if(ALL[word.substring(0, word.length - 1)]) postDel = '●';
 
     hidden = $('#checkAnnotate').checked ? '': 'hidden';
     rank = (RANKS[hash(word)] || 99999) / 1000;
     rank = rank < 15 ? '' : rank < 25 ? '★' : rank < 50 ? '★★' : '★★★';
-    pos = Object.keys(POS[word] || {}).join('&nbsp;');
+    pos = (POS[word] || {}).keys().join('&nbsp;');
 
     return `
         <div class="annotation-container ${hidden}">
@@ -112,7 +96,6 @@ annotate = (word) => {
 }
 
 handleFind = (type) => {
-
     var input,
         found,
         res = [],
@@ -127,9 +110,7 @@ handleFind = (type) => {
 
     if(!input) return;
 
-    if (input.match(/[^a-zA-Z ?@:]/)) {
-        $('#checkRegex').checked = true;
-    }
+    //if (input.match(/[^a-zA-Z ?@:]/)) $('#checkRegex').checked = true;
 
     [regex, ...clauses] = input.match(/([^ :]+)/g);
 
@@ -141,19 +122,22 @@ handleFind = (type) => {
         match_func = ulu(regex);
     }
 
-    found = Object.keys(ALL).map(match_func).filter(x=>x);
+    found = ALL.keys().map(match_func).filter(x=>x);
 
     res = found.filter(matches => (
         clauses.every(clause => {
             var word = clause.replace(/\d/g, x => matches[x | 0]),
                 len;
             if (len = clause.match(/^<(\d+)$/)) {
-                return matches[0].length <=(len[1] | 0);
+                return matches[0].length <= (len[1] | 0);
             } else if (len = clause.match(/^>(\d+)$/)) {
-                return matches[0].length >=(len[1] | 0);
+                return matches[0].length >= (len[1] | 0);
             } else if (len = clause.match(/^=(\d+)$/)) {
                 return matches[0].length == (len[1] | 0);
-            } else if (clause.match(/^[?\-+]/)){
+            }
+            //if (len = clause.match(/^()(\d+)$/)) {
+            //}
+            if (clause.match(/^[?\-+]/)){
                 return true
             } else {
                 return ALL[word];
@@ -179,8 +163,7 @@ handleFind = (type) => {
 
     if (type == 'blur') {
         classes = 'blur hidden';
-    }
-    else if (type == 'alpha') {
+    } else if (type == 'alpha') {
         classes = 'alpha hidden';
         res.sort((a, b) => a.zlength() + hash(a) > b.zlength() + hash(b));
     }
@@ -188,7 +171,6 @@ handleFind = (type) => {
     output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
 
     $('#answer').innerHTML = output || cell('No solution!');
-
     $('#input').focus();
     $("#count").innerHTML = $$('cell').length;
 
