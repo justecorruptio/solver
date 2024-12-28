@@ -19,11 +19,11 @@ check_load = () => {
     }
 }
 
-ALL_DICT = {};
+ALL = {};
 
 fetch('nwl2023.txt').then(resp => resp.text()).then(owl => {
     owl.match(/\w+/g).forEach(word => {
-        ALL_DICT[word.toUpperCase()] = true;
+        ALL[word.toUpperCase()] = true;
     });
     check_load();
 });
@@ -61,9 +61,7 @@ ulu = (pattern) => {
     pattern = new RegExp(['^', ...pattern.sort(), '$'].join('(.*)'), 'i');
 
     return (word) => {
-        var hx = hash(word),
-            result = hx.replace(pattern, (...v)=>v.slice(1,-2).join(''));
-
+        var result = hash(word).replace(pattern, (...v)=>v.slice(1,-2).join(''));
         if (any || result.length == count) {
             return [word];
         }
@@ -89,19 +87,19 @@ annotate = (word) => {
         rank;
 
     LETTERS.forEach((l) => {
-        if (ALL_DICT[l + word]) {
+        if (ALL[l + word]) {
             pre += l;
         }
-        if (ALL_DICT[word + l]) {
+        if (ALL[word + l]) {
             post += l;
         }
     });
 
-    if(ALL_DICT[word.substring(1)]) {
+    if(ALL[word.substring(1)]) {
         preDel = '●';
     }
 
-    if(ALL_DICT[word.substring(0, word.length - 1)]) {
+    if(ALL[word.substring(0, word.length - 1)]) {
         postDel = '●';
     }
 
@@ -124,7 +122,7 @@ annotate = (word) => {
 handleFind = (type) => {
 
     var input,
-        found = [],
+        found,
         res = [],
         output = '',
         regex,
@@ -151,11 +149,7 @@ handleFind = (type) => {
         match_func = ulu(regex);
     }
 
-    Object.keys(ALL_DICT).forEach(word => {
-        if(matches = match_func(word)) {
-            found.push(matches);
-        }
-    });
+    found = Object.keys(ALL).map(match_func).filter(x=>x);
 
     res = found.filter(matches => (
         clauses.every(clause => {
@@ -170,7 +164,7 @@ handleFind = (type) => {
             } else if (clause.match(/^[?\-+]/)){
                 return true
             } else {
-                return ALL_DICT[word];
+                return ALL[word];
             }
         })
     )).map(x => x[0]);
@@ -225,11 +219,11 @@ handleInput = (event) => {
             return false;
         if($el = $(`cell[data-word="${input}"]`)) {
             getCell($el, true);
-        } else if (ALL_DICT[input]) {
-            $('#answer').innerHTML += cell(input, 'err good');
-        } else {
-            $('#answer').innerHTML += cell(input, 'err');
         }
+        else {
+            $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
+        }
+
         $('#input').value = '';
         return false;
     }
