@@ -12,35 +12,28 @@ $$ = x => document.querySelectorAll(x);
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 LOADED = 0;
-check_load = () => {
-    LOADED ++;
-    if(LOADED == 3) {
-        $('#input').disabled = false;
-    }
-}
+checkLoad = () => $('#input').disabled = ++LOADED != 3;
 
 ALL = {};
 
-fetch('nwl2023.txt').then(resp => resp.text()).then(owl => {
-    owl.match(/\w+/g).forEach(word => {
+fetch('nwl2023.txt').then(resp => resp.text()).then(file => {
+    file.match(/\w+/g).forEach(word => {
         ALL[word.toUpperCase()] = true;
     });
-    check_load();
-});
+}).then(checkLoad);
 
 DEFS = {};
 POS = {};
 
 fetch('def.txt').then(resp => resp.text()).then(file => {
     file.match(/[^\n]+\n/g).forEach(line => {
-        var [_, words, def, pos] = line.match(/([^\t]+)\t([ A-Z]+([a-z]+)[^\n]+)\n/);
+        var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.toUpperCase().split(' ').forEach(word => {
             DEFS[word] = def;
             (POS[word] = POS[word] || {})[pos] = 1;
         });
     });
-    check_load();
-});
+}).then(checkLoad);
 
 RANKS = {};
 
@@ -49,8 +42,7 @@ fetch('ranks.txt').then(resp => resp.text()).then(file => {
         var [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
     });
-    check_load();
-});
+}).then(checkLoad);
 
 ulu = (pattern) => {
     var count = 0,
@@ -210,22 +202,12 @@ getCell = ($el, success) => {
 }
 
 handleInput = (event) => {
-    var input = $('#input').value.toUpperCase();
-
-    input = input.replace(/^ +| +$/g, '');
-
-    if (event.keyCode == 13) {
-        if(!input)
-            return false;
-        if($el = $(`cell[data-word="${input}"]`)) {
-            getCell($el, true);
-        }
-        else {
-            $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
-        }
+    var input = $('#input').value.toUpperCase().replace(/^ +| +$/g, '');
+    if (input && event.keyCode == 13) {
+        if($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
+        else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
 
         $('#input').value = '';
-        return false;
     }
 };
 
@@ -247,15 +229,9 @@ handleReveal = () => {
 handleClickCell = (event) => {
     var target = event.target,
         attr = target.attributes['data-word'];
-    if(attr && !target.classList.contains('hidden')) {
-        showDef(attr.value);
-    }
-    if(target.classList.contains('err')) {
-        target.remove();
-    }
-    if(target.classList.contains('hidden')) {
-        getCell(target, false);
-    }
+    if(attr && !target.classList.contains('hidden')) showDef(attr.value);
+    if(target.classList.contains('err')) target.remove();
+    if(target.classList.contains('hidden')) getCell(target, false);
 }
 
 showDef = (word) => {
