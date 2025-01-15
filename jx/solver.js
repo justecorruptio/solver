@@ -13,33 +13,33 @@ LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 hash = word => word.sort().join('');
 
-LOADED = 0;
-checkLoad = () => $('#input').disabled = ++LOADED != 3;
-
 ALL = {};
-fetch('nwl2023.txt').then(resp => resp.text()).then(file => {
-    file.match(/\w+/g).forEach(word => ALL[word.toUpperCase()] = true);
-}).then(checkLoad);
-
 DEFS = {};
 POS = {};
-fetch('def.txt').then(resp => resp.text()).then(file => {
-    file.match(/[^\n]+\n/g).forEach(line => {
+RANKS = {};
+
+fetchFile = (fn, regex, callback) => (
+    fetch(fn).then(resp => resp.text()).then(file => {
+        file.match(regex).forEach(callback);
+    })
+);
+
+Promise.all([
+    fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.toUpperCase()] = true),
+    fetchFile('def.txt', /[^\n]+\n/g, line => {
         var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.toUpperCase().split(' ').forEach(word => {
             DEFS[word] = def;
             (POS[word] = POS[word] || {})[pos] = 1;
         });
-    });
-}).then(checkLoad);
-
-RANKS = {};
-fetch('ranks.txt').then(resp => resp.text()).then(file => {
-    file.match(/[^\n]+\n/g).forEach(line => {
+    }),
+    fetchFile('ranks.txt', /[^\n]+\n/g, line => {
         var [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
-    });
-}).then(checkLoad);
+    }),
+]).then(() => {$('#input').disabled = false});
+
+
 getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
 
 ulu = (pattern) => {
