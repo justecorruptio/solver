@@ -19,15 +19,16 @@ DEFS = {};
 POS = {};
 RANKS = {};
 
-fetchFile = async (fn, regex, callback) =>
-    (await (await fetch(fn)).text()).match(regex).forEach(callback);
+fetchFile = async (fn, regex, callback) => (
+    (await (await fetch(fn)).text()).match(regex).forEach(callback)
+);
 
 Promise.all([
     fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
         var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.upper().split(' ').forEach(word => {
-            DEFS[word] = def;
+            (DEFS[word] = DEFS[word] || []).push(def);
             (POS[word] = POS[word] || {})[pos] = 1;
         });
     }),
@@ -114,7 +115,7 @@ handleFind = (type) => {
 
     clauses.forEach(clause => {
         var [_, op, arg] = clause.match(/^([?\-+])(\d+)$/) || []
-            rankOp = op == '-'?'<':'>';
+            rankOp = op == '-'? '<': '>';
         if (op == '?') {
             res.sort(() => Math.random() > .5);
             res = res.slice(0, arg | 0);
@@ -144,7 +145,7 @@ getCell = ($el, success) => {
 handleInput = (event) => {
     var input = $('#input').value.upper().replace(/^ +| +$/g, '');
     if (input && event.keyCode == 13) {
-        if($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
+        if ($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
 
         $('#input').value = '';
@@ -173,6 +174,6 @@ handleClickCell = (event) => {
 }
 
 showDef = (word) => {
-    $('#def').innerText = DEFS[word] || 'No definition';
+    $('#def').innerText = (DEFS[word] || []).join('\n') || 'No definition';
     $('#def').style.display = 'block';
 }
