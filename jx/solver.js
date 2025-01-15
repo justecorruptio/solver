@@ -11,6 +11,8 @@ $$ = x => document.querySelectorAll(x);
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+hash = word => word.sort().join('');
+
 LOADED = 0;
 checkLoad = () => $('#input').disabled = ++LOADED != 3;
 
@@ -38,6 +40,7 @@ fetch('ranks.txt').then(resp => resp.text()).then(file => {
         RANKS[hx] = rank | 0;
     });
 }).then(checkLoad);
+getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
 
 ulu = (pattern) => {
     var count = 0,
@@ -53,8 +56,6 @@ ulu = (pattern) => {
         return result != hx && (any || result.length == count)? [word]: null;
     }
 }
-
-hash = word => word.sort().join('');
 
 cell = (str, cls, word, addHash) => ( `<cell
     class="${cls || ''}"
@@ -80,8 +81,7 @@ annotate = (word) => {
     if(ALL[word.substring(0, word.length - 1)]) postDel = '●';
 
     hidden = $('#checkAnnotate').checked ? '': 'hidden';
-    rank = (RANKS[hash(word)] || 99999) / 1000;
-    rank = rank < 15 ? '' : rank < 25 ? '★' : rank < 50 ? '★★' : '★★★';
+    rank = '*'.repeat(getRank(word))
     pos = (POS[word] || {}).keys().join('&nbsp;');
 
     return `
@@ -110,13 +110,10 @@ handleFind = (type) => {
 
     if(!input) return;
 
-    //if (input.match(/[^a-zA-Z ?@:]/)) $('#checkRegex').checked = true;
-
     [regex, ...clauses] = input.match(/([^ :]+)/g);
 
     if ($('#checkRegex').checked) {
-        regex = regex.replace(/@/g, '(.+)');
-        regex = `^(?:${regex})$`;
+        regex = '^(?:' + regex.replace(/@/g, '(.+)') + ')$';
         match_func = (word) => word.match(regex);
     } else {
         match_func = ulu(regex);
@@ -126,22 +123,10 @@ handleFind = (type) => {
 
     res = found.filter(matches => (
         clauses.every(clause => {
-            var word = clause.replace(/\d/g, x => matches[x | 0]),
-                len;
-            if (len = clause.match(/^<(\d+)$/)) {
-                return matches[0].length <= (len[1] | 0);
-            } else if (len = clause.match(/^>(\d+)$/)) {
-                return matches[0].length >= (len[1] | 0);
-            } else if (len = clause.match(/^=(\d+)$/)) {
-                return matches[0].length == (len[1] | 0);
-            }
-            //if (len = clause.match(/^()(\d+)$/)) {
-            //}
-            if (clause.match(/^[?\-+]/)){
-                return true
-            } else {
-                return ALL[word];
-            }
+            var [_, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
+            if(op) return eval(`matches[0].length ${op}= ${len}`);
+            if (clause.match(/^[?\-+]/)) return true;
+            return ALL[clause.replace(/\d/g, x => matches[x | 0])];
         })
     )).map(x => x[0]);
 
@@ -152,10 +137,10 @@ handleFind = (type) => {
             res = res.slice(0, arg[1] | 0);
         }
         if (arg = clause.match(/^[\-](\d+)$/)) {
-            res = res.filter(word => (RANKS[hash(word)] || 99999) <= (arg[1] | 0))
+            res = res.filter(word => getRank(word) <= (arg[1] | 0))
         }
         if (arg = clause.match(/^[+](\d+)$/)) {
-            res = res.filter(word => (RANKS[hash(word)] || 99999) >= (arg[1] | 0))
+            res = res.filter(word => getRank(word) >= (arg[1] | 0))
         }
     })
 
@@ -203,9 +188,7 @@ handleFocus = (event, height) => {
 };
 
 handleReveal = () => {
-    $$('cell.hidden').forEach($el => {
-        $el.classList.remove('hidden').add('missed');
-    });
+    $$('cell.hidden').forEach($el => $el.classList.remove('hidden').add('missed'));
 };
 
 handleClickCell = (event) => {
