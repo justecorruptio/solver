@@ -12,8 +12,6 @@ $$ = x => document.querySelectorAll(x);
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-hash = word => word.sort().join('');
-
 ALL = {};
 DEFS = {};
 POS = {};
@@ -48,7 +46,7 @@ Promise.all([
     handleFind();
 });
 
-
+hash = (word) => word.sort().join('');
 getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
 
 ulu = (pattern) => {
@@ -66,12 +64,11 @@ ulu = (pattern) => {
     }
 }
 
-cell = (str, cls, word, addHash) => ( `<cell
+cell = (str, cls, word) => `<cell
     class="${cls || ''}"
-    ${word?`data-word="${word}"`:''}
-    ${addHash?`data-hash="${hash(word)}"`:''}
+    ${word?`data-word="${word}" data-hash="${hash(word)}"`:''}
     onclick="handleClickCell(event)"
->${str}</cell>`);
+>${str}</cell>`;
 
 annotate = (word) => {
     var hidden = $('#checkAnnotate').checked ? '': 'hidden',
@@ -126,11 +123,11 @@ handleFind = (type) => {
 
     res.sort((a, b) => a.zlength() + sortKey(a) > b.zlength() + sortKey(b));
 
-    var output = res.map(x => cell(
-        annotate(x), type? `hidden ${type}`: '', x, 1
+    var output = res.map(word => cell(
+        annotate(word), type && `hidden ${type}`, word
     )).join('');
 
-    $("#count").innerHTML = $$('cell').length;
+    $("#count").innerHTML = res.length;
     $('#answer').innerHTML = output || cell('No solution!');
     $('#input').focus();
     location.hash = `${isRegexMode?'R':'U'},${input.replace(/ /g, ':')}`;
