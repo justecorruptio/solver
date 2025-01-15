@@ -35,7 +35,17 @@ Promise.all([
         var [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
     }),
-]).then(() => {$('#input').disabled = false});
+]).then(() => {
+    let locHash = decodeURIComponent(location.hash),
+        [_, type, input] = locHash.match(/#([UR]),(.*)/);
+
+    $('#input').disabled = false;
+    if(!locHash || !type) return;
+
+    $('#checkRegex').checked = type == 'R';
+    $('#input').value = input;
+    handleFind();
+});
 
 
 getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
@@ -63,25 +73,13 @@ cell = (str, cls, word, addHash) => ( `<cell
 >${str}</cell>`);
 
 annotate = (word) => {
-    var pre = '',
-        post = '',
-        preDel = '',
-        postDel = '',
-        hidden,
-        rank;
-
-    LETTERS.forEach((l) => {
-        if(ALL[l + word]) pre += l;
-        if(ALL[word + l]) post += l;
-    });
-
-    if(ALL[word.substring(1)]) preDel = '●';
-    if(ALL[word.substring(0, word.length - 1)]) postDel = '●';
-
-    hidden = $('#checkAnnotate').checked ? '': 'hidden';
-    rank = '*'.repeat(getRank(word))
-    pos = (POS[word] || {}).keys().join('&nbsp;');
-
+    var hidden = $('#checkAnnotate').checked ? '': 'hidden',
+        rank = '*'.repeat(getRank(word)),
+        pos = (POS[word] || {}).keys().join('&nbsp;'),
+        pre = LETTERS.filter(l=>ALL[l + word]).join(''),
+        post = LETTERS.filter(l=>ALL[word + l]).join(''),
+        preDel = ALL[word.substring(1)]? '●': '',
+        postDel = ALL[word.substring(0, word.length - 1)]? '●': '';
     return `
         <div class="annotation-container ${hidden}">
         <small class="annotation left">${pre}${preDel}</small>
@@ -98,8 +96,6 @@ handleFind = (type) => {
         found,
         res = [],
         output = '',
-        regex,
-        clauses,
         classes = '',
         match_func;
 
@@ -108,7 +104,7 @@ handleFind = (type) => {
 
     if(!input) return;
 
-    [regex, ...clauses] = input.match(/([^ :]+)/g);
+    var [regex, ...clauses] = input.match(/([^ :]+)/g);
 
     if ($('#checkRegex').checked) {
         regex = `^(?:${regex.replace(/@/g, '(.+)')})$`;
@@ -200,13 +196,4 @@ handleClickCell = (event) => {
 showDef = (word) => {
     $('#def').innerText = DEFS[word] || 'No definition';
     $('#def').style.display = 'block';
-}
-
-if( location.hash ) {
-    let hash = decodeURIComponent(location.hash.replace(/^#/, '')),
-        match = hash.match(/([UR]),(.*)/);
-    if(match) {
-        $('#checkRegex').checked = match[1] == 'R';
-        $('#input').value = match[2];
-    }
 }
