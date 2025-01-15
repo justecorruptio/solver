@@ -92,23 +92,20 @@ annotate = (word) => {
 }
 
 handleFind = (type) => {
-    var input,
+    var input = $('#input').value = $('#input').value.trim().upper(),
+        isRegexMode = $('#checkRegex').checked,
+        [regex, ...clauses] = input.match(/([^ :]+)/g),
+        wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
         found,
         res = [],
         output = '',
         classes = '',
         match_func;
 
-    input = $('#input').value = $('#input').value.replace(/^\s+|\s+$/g, '');
-    input = input.upper();
-
     if(!input) return;
 
-    var [regex, ...clauses] = input.match(/([^ :]+)/g);
-
-    if ($('#checkRegex').checked) {
-        regex = `^(?:${regex.replace(/@/g, '(.+)')})$`;
-        match_func = (word) => word.match(regex);
+    if (isRegexMode) {
+        match_func = (word) => word.match(wrappedRegex);
     } else {
         match_func = ulu(regex);
     }
@@ -149,11 +146,10 @@ handleFind = (type) => {
 
     output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
 
+    $("#count").innerHTML = $$('cell').length;
     $('#answer').innerHTML = output || cell('No solution!');
     $('#input').focus();
-    $("#count").innerHTML = $$('cell').length;
-
-    location.hash = ($('#checkRegex').checked?'R':'U') + ',' + input.replace(/ /g, ':');
+    location.hash = `${isRegexMode?'R':'U'},${input.replace(/ /g, ':')}`;
 };
 
 getCell = ($el, success) => {
