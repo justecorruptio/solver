@@ -98,11 +98,10 @@ handleFind = (type) => {
     var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
         wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
-        res = [],
-        output = '',
-        classes = '';
+        classes = type? `hidden ${type}`: '',
+        sortKey = type == 'alpha' ? hash: x => x;
 
-    res = ALL.keys().map(
+    var res = ALL.keys().map(
         isRegexMode? word => word.match(wrappedRegex): ulu(regex)
     ).filter(matches => matches && (
         clauses.every(clause => {
@@ -114,29 +113,21 @@ handleFind = (type) => {
     )).map(x => x[0]);
 
     clauses.forEach(clause => {
-        var arg;
-        if (arg = clause.match(/^[?](\d+)$/)) {
-            res.sort((a, b) => Math.random() > .5);
-            res = res.slice(0, arg[1] | 0);
-        }
-        if (arg = clause.match(/^[\-](\d+)$/)) {
-            res = res.filter(word => getRank(word) <= (arg[1] | 0))
-        }
-        if (arg = clause.match(/^[+](\d+)$/)) {
-            res = res.filter(word => getRank(word) >= (arg[1] | 0))
+        var [_, op, arg] = clause.match(/^([?\-+])(\d+)$/) || []
+            rankOp = op == '-'?'<':'>';
+        if (op == '?') {
+            res.sort(() => Math.random() > .5);
+            res = res.slice(0, arg | 0);
+        } else {
+            eval(`res = res.filter(word => getRank(word) ${rankOp}= (arg | 0))`);
         }
     })
 
-    res.sort((a, b) => a.zlength() + a > b.zlength() + b);
+    res.sort((a, b) => a.zlength() + sortKey(a) > b.zlength() + sortKey(b));
 
-    if (type == 'blur') {
-        classes = 'blur hidden';
-    } else if (type == 'alpha') {
-        classes = 'alpha hidden';
-        res.sort((a, b) => a.zlength() + hash(a) > b.zlength() + hash(b));
-    }
-
-    output += res.map(x => cell(annotate(x), classes, x, 1)).join('');
+    var output = res.map(x => cell(
+        annotate(x), type? `hidden ${type}`: '', x, 1
+    )).join('');
 
     $("#count").innerHTML = $$('cell').length;
     $('#answer').innerHTML = output || cell('No solution!');
