@@ -1,5 +1,6 @@
 Object.prototype.keys = function(){return Object.keys(this)};
 String.prototype.sort = function() {return this.split('').sort()};
+String.prototype.upper = function() {return this.toUpperCase()};
 String.prototype.zlength = function() {return `${this.length}`.padStart(2, '0')};
 DOMTokenList.prototype._add = DOMTokenList.prototype.add;
 DOMTokenList.prototype.add = function(v) {this._add(v); return this};
@@ -18,17 +19,14 @@ DEFS = {};
 POS = {};
 RANKS = {};
 
-fetchFile = (fn, regex, callback) => (
-    fetch(fn).then(resp => resp.text()).then(file => {
-        file.match(regex).forEach(callback);
-    })
-);
+fetchFile = async (fn, regex, callback) =>
+    (await (await fetch(fn)).text()).match(regex).forEach(callback);
 
 Promise.all([
-    fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.toUpperCase()] = true),
+    fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
         var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
-        words.toUpperCase().split(' ').forEach(word => {
+        words.upper().split(' ').forEach(word => {
             DEFS[word] = def;
             (POS[word] = POS[word] || {})[pos] = 1;
         });
@@ -106,7 +104,7 @@ handleFind = (type) => {
         match_func;
 
     input = $('#input').value = $('#input').value.replace(/^\s+|\s+$/g, '');
-    input = input.toUpperCase();
+    input = input.upper();
 
     if(!input) return;
 
@@ -169,7 +167,7 @@ getCell = ($el, success) => {
 }
 
 handleInput = (event) => {
-    var input = $('#input').value.toUpperCase().replace(/^ +| +$/g, '');
+    var input = $('#input').value.upper().replace(/^ +| +$/g, '');
     if (input && event.keyCode == 13) {
         if($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
