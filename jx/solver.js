@@ -92,30 +92,22 @@ annotate = (word) => {
 }
 
 handleFind = (type) => {
-    var input = $('#input').value = $('#input').value.trim().upper(),
-        isRegexMode = $('#checkRegex').checked,
+    var input = $('#input').value = $('#input').value.trim().upper();
+    if (!input) return;
+
+    var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
         wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
-        found,
         res = [],
         output = '',
-        classes = '',
-        match_func;
+        classes = '';
 
-    if(!input) return;
-
-    if (isRegexMode) {
-        match_func = (word) => word.match(wrappedRegex);
-    } else {
-        match_func = ulu(regex);
-    }
-
-    found = ALL.keys().map(match_func).filter(x=>x);
-
-    res = found.filter(matches => (
+    res = ALL.keys().map(
+        isRegexMode? word => word.match(wrappedRegex): ulu(regex)
+    ).filter(matches => matches && (
         clauses.every(clause => {
             var [_, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
-            if(op) return eval(`matches[0].length ${op}= ${len}`);
+            if (op) return eval(`matches[0].length ${op}= ${len}`);
             if (clause.match(/^[?\-+]/)) return true;
             return ALL[clause.replace(/\d/g, x => matches[x | 0])];
         })
