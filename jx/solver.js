@@ -113,7 +113,7 @@ handleFind = (type) => {
     [regex, ...clauses] = input.match(/([^ :]+)/g);
 
     if ($('#checkRegex').checked) {
-        regex = '^(?:' + regex.replace(/@/g, '(.+)') + ')$';
+        regex = `^(?:${regex.replace(/@/g, '(.+)')})$`;
         match_func = (word) => word.match(regex);
     } else {
         match_func = ulu(regex);
