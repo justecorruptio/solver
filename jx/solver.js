@@ -34,14 +34,14 @@ loadHash = window.onhashchange = () => {
 Promise.all([
     fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
-        var [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
+        let [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.upper().split(' ').forEach(word => {
             (DEFS[word] = DEFS[word] || []).push(def);
             (POS[word] = POS[word] || {})[pos] = 1;
         });
     }),
     fetchFile('ranks.txt', /[^\n]+\n/g, line => {
-        var [hx, rank] = line.split('\t');
+        let [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
     }),
 ]).then(() => {
