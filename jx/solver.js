@@ -21,6 +21,16 @@ fetchFile = async (fn, regex, callback) => (
     (await (await fetch(fn)).text()).match(regex).forEach(callback)
 );
 
+loadHash = window.onhashchange = () => {
+    let locHash = decodeURIComponent(location.hash),
+        [_, type, input] = locHash.match(/#([UR]),(.*)/) || [];
+
+    if(!type) return;
+    $('#checkRegex').checked = type == 'R';
+    $('#input').value = input;
+    handleFind();
+};
+
 Promise.all([
     fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
@@ -35,16 +45,8 @@ Promise.all([
         RANKS[hx] = rank | 0;
     }),
 ]).then(() => {
-    let locHash = decodeURIComponent(location.hash),
-        [_, type, input] = locHash.match(/#([UR]),(.*)/);
-
     $('#input').disabled = false;
-    if(!locHash || !type) return;
-
-    $('#checkRegex').checked = type == 'R';
-    $('#input').value = input;
-    handleFind();
-});
+}).then(loadHash);
 
 hash = (word) => word.sort().join('');
 getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
