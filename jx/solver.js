@@ -10,12 +10,17 @@ for (let m of ['add','remove']) {
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
 LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-ALL = {}; DEFS = {}; POS = {}; RANKS = {};
+ALL = {}; GRAMS = {}; DEFS = {}; POS = {}; RANKS = {};
 
 fetchFile = async (fn, re, cb) => (await (await fetch(fn)).text()).match(re).forEach(cb);
 
 Promise.all([
-    fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
+    fetchFile('nwl2023.txt', /\w+/g, word => {
+        word = word.upper();
+        var hx = hash(word);
+        ALL[word] = true;
+        GRAMS[hx] = [...GRAMS[hx] || [], word];
+    }),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
         let [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.upper().split(' ').forEach(word => {
@@ -33,14 +38,10 @@ hash = word => word.sort().join('');
 getRank = word => (RANKS[hash(word)] || 99999) / 20000;
 
 ulu = (pattern) => {
-    let count = 0, any = false;
-    pattern = pattern.replace(/[?]/g, () => (count++, ''));
-    pattern = pattern.replace(/[@]/g, () => (any = true, ''));
-    pattern = new RegExp(['^', ...pattern.sort(), '$'].join('(.*)'), 'i');
-    return (word) => {
-        let hx = hash(word), result = hx.replace(pattern, (...v) => v.slice(1,-2).join(''));
-        return result != hx && (any || result.length == count) ? [word] : null;
-    }
+    let any = !!pattern.match(/@/),
+        letters = pattern.replace(/[?@]/g, '').sort(),
+        regex = new RegExp(['^', ...letters, '$'].join('.*'));
+    return (word) => (any || pattern.length == word.length) && hash(word).match(regex);
 }
 
 cell = (str, cls, word) => `<cell class="${cls || ''}"
@@ -84,8 +85,11 @@ handleFind = (type) => {
         var [_, op, arg] = clause.match(/^([?\-+])(\d+)$/) || []
             rankOp = op == '-'? '<': '>';
         if (op == '?') {
-            res.sort(() => Math.random() > .5);
+            res.sort(() => Math.random() - .5);
             res = res.slice(0, arg | 0);
+            if (!isRegexMode) {
+                res = [...new Set(res.map(w => GRAMS[hash(w)]).flat())];
+            }
         } else {
             eval(`res = res.filter(word => getRank(word) ${rankOp}= (arg | 0))`);
         }
