@@ -1,5 +1,5 @@
 Object.prototype.keys = function(){return Object.keys(this)};
-String.prototype.sort = function(){return [...this].sort()};
+String.prototype.sort = function(){return [...this].sort().join('')};
 String.prototype.upper = function(){return this.toUpperCase()};
 String.prototype.zlength = function(){return (this.length+'').padStart(2,'0')};
 for (let m of ['add','remove']) {
@@ -17,9 +17,8 @@ fetchFile = async (fn, cb) => (await (await fetch(fn)).text()).match(/[^\n]+/g).
 Promise.all([
     fetchFile('nwl2023.txt', word => {
         word = word.upper();
-        let hx = hash(word);
         ALL[word] = true;
-        (GRAMS[hx] ||= []).push(word);
+        (GRAMS[word.sort()] ||= []).push(word);
     }),
     fetchFile('def.txt', line => {
         let [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
@@ -34,18 +33,17 @@ Promise.all([
     }),
 ]).then(() => {$('#input').disabled = false;})
 
-hash = word => word.sort().join('');
-getRank = word => (RANKS[hash(word)] || 99999) / 20000;
+getRank = word => (RANKS[word.sort()] || 99999) / 20000;
 
 ulu = (pattern) => {
     let any = !!pattern.match(/@/),
         letters = pattern.replace(/[?@]/g, '').sort(),
         regex = new RegExp(['^', ...letters, '$'].join('.*'));
-    return (word) => (any || pattern.length == word.length) && hash(word).match(regex);
+    return (word) => (any || pattern.length == word.length) && word.sort().match(regex);
 }
 
 cell = (str, cls, word) => `<cell class="${cls || ''}"
-    ${word ? `data-word="${word}" data-hash="${hash(word)}"` : ''}
+    ${word ? `data-word="${word}" data-hash="${word.sort()}"` : ''}
     onclick="handleClickCell(event)">${str}</cell>`;
 
 annotate = (word) => {
@@ -70,7 +68,7 @@ handleFind = (type) => {
     var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
         wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
-        sortKey = type == 'alpha' ? hash : x => x;
+        sortKey = type == 'alpha' ? w => w.sort() : w => w;
 
     var res = ALL.keys().map(
         isRegexMode ? word => word.match(wrappedRegex) : ulu(regex)
@@ -88,7 +86,7 @@ handleFind = (type) => {
             res.sort(() => Math.random() - .5);
             res = res.slice(0, arg | 0);
             if (!isRegexMode) {
-                res = [...new Set(res.map(w => GRAMS[hash(w)]).flat())];
+                res = [...new Set(res.map(w => GRAMS[w.sort()]).flat())];
             }
         } else {
             eval(`res = res.filter(word => getRank(word) ${rankOp}= (arg | 0))`);
@@ -109,10 +107,10 @@ getCell = ($el, success) => {
     $("#count").innerHTML = $$('cell.hidden').length;
 }
 
-handleInput = (event) => {
+handleInput = ({keyCode, shiftKey}) => {
     var input = $('#input').value.upper().trim();
-    if (input && event.keyCode == 13) {
-        if (event.shiftKey) { handleFind(); return; }
+    if (input && keyCode == 13) {
+        if (shiftKey) { handleFind(); return; }
         if ($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
         $('#input').value = '';
@@ -123,8 +121,7 @@ handleAnnotation = () => $$('.annotation-container').forEach(x => x.classList.to
 
 handleReveal = () => $$('cell.hidden').forEach(x => x.classList.remove('hidden').add('missed'));
 
-handleClickCell = (event) => {
-    var target = event.target, word = target.dataset.word;
+handleClickCell = ({target, target: {dataset: {word}}}) => {
     if(word && !target.classList.contains('hidden')) showDef(word);
     if(target.classList.contains('err')) target.remove();
     if(target.classList.contains('hidden')) getCell(target, false);
