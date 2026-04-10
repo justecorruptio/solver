@@ -1,31 +1,22 @@
 Object.prototype.keys = function(){return Object.keys(this)};
-String.prototype.sort = function() {return this.split('').sort()};
-String.prototype.upper = function() {return this.toUpperCase()};
-String.prototype.zlength = function() {return `${this.length}`.padStart(2, '0')};
-DOMTokenList.prototype._add = DOMTokenList.prototype.add;
-DOMTokenList.prototype.add = function(v) {this._add(v); return this};
-DOMTokenList.prototype._remove = DOMTokenList.prototype.remove;
-DOMTokenList.prototype.remove = function(v) {this._remove(v); return this};
+String.prototype.sort = function(){return [...this].sort()};
+String.prototype.upper = function(){return this.toUpperCase()};
+String.prototype.zlength = function(){return (this.length+'').padStart(2,'0')};
+for (let m of ['add','remove']) {
+    let orig = DOMTokenList.prototype[m];
+    DOMTokenList.prototype[m] = function(v){orig.call(this,v); return this};
+}
 
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
+LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+ALL = {}; DEFS = {}; POS = {}; RANKS = {};
 
-LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-ALL = {};
-DEFS = {};
-POS = {};
-RANKS = {};
-
-fetchFile = async (fn, regex, callback) => (
-    (await (await fetch(fn)).text()).match(regex).forEach(callback)
-);
+fetchFile = async (fn, re, cb) => (await (await fetch(fn)).text()).match(re).forEach(cb);
 
 loadHash = window.onhashchange = () => {
-    let locHash = decodeURIComponent(location.hash),
-        [_, type, input] = locHash.match(/#([UR]),(.*)/) || [];
-
-    if(!type) return;
+    let [_, type, input] = decodeURIComponent(location.hash).match(/#([UR]),(.*)/) || [];
+    if (!type) return;
     $('#checkRegex').checked = type == 'R';
     $('#input').value = input;
     handleFind();
@@ -48,47 +39,37 @@ Promise.all([
     $('#input').disabled = false;
 }).then(loadHash);
 
-hash = (word) => word.sort().join('');
-getRank = (word) => (RANKS[hash(word)] || 99999) / 20000;
+hash = word => word.sort().join('');
+getRank = word => (RANKS[hash(word)] || 99999) / 20000;
 
 ulu = (pattern) => {
-    var count = 0,
-        any = false;
-
-    pattern = pattern.replace(/[?]/g, x=>(count++, ''));
-    pattern = pattern.replace(/[@]/g, x=>(any=true, ''));
+    let count = 0, any = false;
+    pattern = pattern.replace(/[?]/g, () => (count++, ''));
+    pattern = pattern.replace(/[@]/g, () => (any = true, ''));
     pattern = new RegExp(['^', ...pattern.sort(), '$'].join('(.*)'), 'i');
-
     return (word) => {
-        var hx = hash(word),
-            result = hx.replace(pattern, (...v)=>v.slice(1,-2).join(''));
-        return result != hx && (any || result.length == count)? [word]: null;
+        let hx = hash(word), result = hx.replace(pattern, (...v) => v.slice(1,-2).join(''));
+        return result != hx && (any || result.length == count) ? [word] : null;
     }
 }
 
-cell = (str, cls, word) => `<cell
-    class="${cls || ''}"
-    ${word?`data-word="${word}" data-hash="${hash(word)}"`:''}
-    onclick="handleClickCell(event)"
->${str}</cell>`;
+cell = (str, cls, word) => `<cell class="${cls || ''}"
+    ${word ? `data-word="${word}" data-hash="${hash(word)}"` : ''}
+    onclick="handleClickCell(event)">${str}</cell>`;
 
 annotate = (word) => {
-    var hidden = $('#checkAnnotate').checked ? '': 'hidden',
+    let hidden = $('#checkAnnotate').checked ? '' : 'hidden',
         rank = '*'.repeat(getRank(word)),
         pos = (POS[word] || {}).keys().join('&nbsp;'),
-        pre = LETTERS.filter(l=>ALL[l + word]).join(''),
-        post = LETTERS.filter(l=>ALL[word + l]).join(''),
-        preDel = ALL[word.substring(1)]? '●': '',
-        postDel = ALL[word.substring(0, word.length - 1)]? '●': '';
-    return `
-        <div class="annotation-container ${hidden}">
+        pre = LETTERS.filter(l => ALL[l + word]).join(''),
+        post = LETTERS.filter(l => ALL[word + l]).join(''),
+        preDel = ALL[word.substring(1)] ? '●' : '',
+        postDel = ALL[word.slice(0, -1)] ? '●' : '';
+    return `<div class="annotation-container ${hidden}">
         <small class="annotation left">${pre}${preDel}</small>
-        <small class="annotation rank">${rank}</small>
-        ${word}
+        <small class="annotation rank">${rank}</small>${word}
         <small class="annotation right">${postDel}${post}</small>
-        <small class="annotation pos">${pos}</small>
-        </div>
-    `;
+        <small class="annotation pos">${pos}</small></div>`;
 }
 
 handleFind = (type) => {
@@ -98,19 +79,16 @@ handleFind = (type) => {
     var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
         wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
-        classes = type? `hidden ${type}`: '',
-        sortKey = type == 'alpha' ? hash: x => x;
+        sortKey = type == 'alpha' ? hash : x => x;
 
     var res = ALL.keys().map(
-        isRegexMode? word => word.match(wrappedRegex): ulu(regex)
-    ).filter(matches => matches && (
-        clauses.every(clause => {
-            var [_, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
-            if (op) return eval(`matches[0].length ${op}= ${len}`);
-            if (clause.match(/^[?\-+]/)) return true;
-            return ALL[clause.replace(/\d/g, x => matches[x | 0])];
-        })
-    )).map(x => x[0]);
+        isRegexMode ? word => word.match(wrappedRegex) : ulu(regex)
+    ).filter(matches => matches && clauses.every(clause => {
+        var [_, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
+        if (op) return eval(`matches[0].length ${op}= ${len}`);
+        if (clause.match(/^[?\-+]/)) return true;
+        return ALL[clause.replace(/\d/g, x => matches[x | 0])];
+    })).map(x => x[0]);
 
     clauses.forEach(clause => {
         var [_, op, arg] = clause.match(/^([?\-+])(\d+)$/) || []
@@ -125,10 +103,7 @@ handleFind = (type) => {
 
     res.sort((a, b) => a.zlength() + sortKey(a) > b.zlength() + sortKey(b));
 
-    var output = res.map(word => cell(
-        annotate(word), type && `hidden ${type}`, word
-    )).join('');
-
+    var output = res.map(w => cell(annotate(w), type && `hidden ${type}`, w)).join('');
     $("#count").innerHTML = res.length;
     $('#answer').innerHTML = output || cell('No solution!');
     $('#input').focus();
@@ -146,28 +121,20 @@ handleInput = (event) => {
     if (input && event.keyCode == 13) {
         if ($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
-
         $('#input').value = '';
     }
 };
 
-handleAnnotation = (event) => {
-    $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
-}
+handleAnnotation = () => $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
 
-handleFocus = (event, height) => {
-    let vh = window.innerHeight - height;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-};
+handleFocus = (event, height) =>
+    document.documentElement.style.setProperty('--vh', `${innerHeight - height}px`);
 
-handleReveal = () => {
-    $$('cell.hidden').forEach($el => $el.classList.remove('hidden').add('missed'));
-};
+handleReveal = () => $$('cell.hidden').forEach(x => x.classList.remove('hidden').add('missed'));
 
 handleClickCell = (event) => {
-    var target = event.target,
-        attr = target.attributes['data-word'];
-    if(attr && !target.classList.contains('hidden')) showDef(attr.value);
+    var target = event.target, word = target.dataset.word;
+    if(word && !target.classList.contains('hidden')) showDef(word);
     if(target.classList.contains('err')) target.remove();
     if(target.classList.contains('hidden')) getCell(target, false);
 }
