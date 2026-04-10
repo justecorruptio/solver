@@ -1,12 +1,6 @@
 Object.prototype.keys = function(){return Object.keys(this)};
 String.prototype.sort = function(){return [...this].sort().join('')};
 String.prototype.upper = function(){return this.toUpperCase()};
-String.prototype.zlength = function(){return (this.length+'').padStart(2,'0')};
-for (let m of ['add','remove']) {
-    let orig = DOMTokenList.prototype[m];
-    DOMTokenList.prototype[m] = function(v){orig.call(this,v); return this};
-}
-
 $ = x => document.querySelector(x);
 $$ = x => document.querySelectorAll(x);
 LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -21,26 +15,28 @@ Promise.all([
         (GRAMS[word.sort()] ||= []).push(word);
     }),
     fetchFile('def.txt', line => {
-        let [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
+        let [, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.upper().split(' ').forEach(word => {
             (DEFS[word] ||= []).push(def);
             (POS[word] ||= {})[pos] = 1;
         });
     }),
     fetchFile('ranks.txt', line => {
-        let [hx, rank] = line.split('\t');
-        RANKS[hx] = rank | 0;
+        let [hash, rank] = line.split('\t');
+        RANKS[hash] = rank | 0;
     }),
-]).then(() => {$('#input').disabled = false;})
+]).then(() => {$('#input').disabled = false})
 
 getRank = word => (RANKS[word.sort()] || 99999) / 20000;
 
 ulu = (pattern) => {
-    let any = !!pattern.match(/@/),
+    let any = /@/.test(pattern),
         letters = pattern.replace(/[?@]/g, '').sort(),
-        regex = new RegExp(['^', ...letters, '$'].join('.*'));
+        regex = RegExp(['^', ...letters, '$'].join('.*'));
     return (word) => (any || pattern.length == word.length) && word.sort().match(regex);
 }
+
+sm = (cls, text) => `<small class="annotation ${cls}">${text}</small>`;
 
 cell = (str, cls, word) => `<cell class="${cls || ''}"
     ${word ? `data-word="${word}" data-hash="${word.sort()}"` : ''}
@@ -48,90 +44,79 @@ cell = (str, cls, word) => `<cell class="${cls || ''}"
 
 annotate = (word) => {
     let hidden = $('#checkAnnotate').checked ? '' : 'hidden',
-        rank = '*'.repeat(getRank(word)),
-        pos = (POS[word] || {}).keys().join('&nbsp;'),
         pre = LETTERS.filter(l => ALL[l + word]).join(''),
-        post = LETTERS.filter(l => ALL[word + l]).join(''),
-        preDel = ALL[word.substring(1)] ? '●' : '',
-        postDel = ALL[word.slice(0, -1)] ? '●' : '';
+        post = LETTERS.filter(l => ALL[word + l]).join('');
     return `<div class="annotation-container ${hidden}">
-        <small class="annotation left">${pre}${preDel}</small>
-        <small class="annotation rank">${rank}</small>${word}
-        <small class="annotation right">${postDel}${post}</small>
-        <small class="annotation pos">${pos}</small></div>`;
+        ${sm('left', pre + (ALL[word.substring(1)] ? '●' : ''))}
+        ${sm('rank', '*'.repeat(getRank(word))) + word}
+        ${sm('right',(ALL[word.slice(0,-1)] ? '●' : '') + post)}
+        ${sm('pos', (POS[word] || {}).keys().join('&nbsp;'))}
+    </div>`;
 }
 
 handleFind = (type) => {
     var input = $('#input').value = $('#input').value.trim().upper();
     if (!input) return;
-
     var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
-        wrappedRegex = `^(?:${ regex.replace(/@/g, '(.+)') })$`,
+        wrappedRegex = `^(?:${regex.replace(/@/g,'(.+)')})$`,
         sortKey = type == 'alpha' ? w => w.sort() : w => w;
-
     var res = ALL.keys().map(
         isRegexMode ? word => word.match(wrappedRegex) : ulu(regex)
     ).filter(matches => matches && clauses.every(clause => {
-        var [_, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
-        if (op) return eval(`matches[0].length ${op}= ${len}`);
-        if (clause.match(/^[?\-+]/)) return true;
-        return ALL[clause.replace(/\d/g, x => matches[x | 0])];
+        var [, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
+        return op ? eval(`matches[0].length ${op}= ${len}`)
+            : /^[?\-+]/.test(clause) || ALL[clause.replace(/\d/g, x => matches[x|0])];
     })).map(x => x[0]);
-
     clauses.forEach(clause => {
-        var [_, op, arg] = clause.match(/^([?\-+])(\d+)$/) || []
-            rankOp = op == '-'? '<': '>';
+        var [, op, arg] = clause.match(/^([?\-+])(\d+)$/) || [];
+        if (!op) return;
         if (op == '?') {
-            res.sort(() => Math.random() - .5);
-            res = res.slice(0, arg | 0);
-            if (!isRegexMode) {
-                res = [...new Set(res.map(w => GRAMS[w.sort()]).flat())];
-            }
+            res = res.sort(() => Math.random() - .5) .slice(0, arg | 0);
+            if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
         } else {
-            eval(`res = res.filter(word => getRank(word) ${rankOp}= (arg | 0))`);
+            var rankOp = op == '-' ? '<' : '>';
+            eval(`res=res.filter(w=>getRank(w)${rankOp}=${arg|0})`);
         }
-    })
-
-    res.sort((a, b) => a.zlength() + sortKey(a) > b.zlength() + sortKey(b));
-
-    var output = res.map(w => cell(annotate(w), type && `hidden ${type}`, w)).join('');
+    });
+    res.sort((a, b) => a.length - b.length || (sortKey(a) > sortKey(b) ? 1 : -1));
     $("#count").innerHTML = res.length;
-    $('#answer').innerHTML = output || cell('No solution!');
+    $('#answer').innerHTML = res.map(
+        word => cell(annotate(word), type && `hidden ${type}`, word)
+    ).join('') || cell('No solution!');
     $('#input').focus();
 };
 
-getCell = ($el, success) => {
-    $$('.last-got').forEach(x=>x.classList.remove('last-got'));
-    $el.classList.remove('hidden').add(success?'got':'missed').add('last-got');
+getCell = (el, success) => {
+    $$('.last-got').forEach(x => x.classList.remove('last-got'));
+    el.classList.replace('hidden', success ? 'got' : 'missed');
+    el.classList.add('last-got');
     $("#count").innerHTML = $$('cell.hidden').length;
 }
 
 handleInput = ({keyCode, shiftKey}) => {
     var input = $('#input').value.upper().trim();
     if (input && keyCode == 13) {
-        if (shiftKey) { handleFind(); return; }
-        if ($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
+        if (shiftKey) return handleFind();
+        var el = $(`cell[data-word="${input}"]`);
+        if (el) getCell(el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
         $('#input').value = '';
     }
 };
 
 handleAnnotation = () => $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
-
-handleReveal = () => $$('cell.hidden').forEach(x => x.classList.remove('hidden').add('missed'));
+handleReveal = () => $$('cell.hidden').forEach(x => x.classList.replace('hidden', 'missed'));
 
 handleClickCell = ({target, target: {dataset: {word}}}) => {
-    if(word && !target.classList.contains('hidden')) showDef(word);
-    if(target.classList.contains('err')) target.remove();
-    if(target.classList.contains('hidden')) getCell(target, false);
+    if (target.matches('.err')) return target.remove();
+    if (target.matches('.hidden')) return getCell(target, false);
+    if (word) {
+        $('#def').innerText = (DEFS[word]||[]).join('\n') || 'No definition';
+        $('#def').style.display = 'block';
+    }
 }
 
-showDef = (word) => {
-    $('#def').innerText = (DEFS[word] || []).join('\n') || 'No definition';
-    $('#def').style.display = 'block';
-}
-
-window.visualViewport.addEventListener('resize', (event) => {
+visualViewport.addEventListener('resize', (event) => {
     document.documentElement.style.setProperty('--vh', `${event.target.height}px`);
 });
