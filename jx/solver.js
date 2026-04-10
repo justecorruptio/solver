@@ -27,8 +27,6 @@ Promise.all([
     }),
 ]).then(() => {$('#input').disabled = false})
 
-getRank = word => (RANKS[word.sort()] || 99999) / 20000;
-
 ulu = (pattern) => {
     let any = /@/.test(pattern),
         letters = pattern.replace(/[?@]/g, '').sort(),
@@ -45,12 +43,13 @@ cell = (str, cls, word) => `<cell class="${cls || ''}"
 annotate = (word) => {
     let hidden = $('#checkAnnotate').checked ? '' : 'hidden',
         pre = LETTERS.filter(l => ALL[l + word]).join(''),
-        post = LETTERS.filter(l => ALL[word + l]).join('');
+        post = LETTERS.filter(l => ALL[word + l]).join(''),
+        rank = (RANKS[word.sort()] || 99999) / 20000;
     return `<div class="annotation-container ${hidden}">
         ${sm('left', pre + (ALL[word.substring(1)] ? '●' : ''))}
-        ${sm('rank', '*'.repeat(getRank(word))) + word}
-        ${sm('right',(ALL[word.slice(0,-1)] ? '●' : '') + post)}
-        ${sm('pos', (POS[word] || {}).keys().join('&nbsp;'))}
+        ${sm('super left', '★'.repeat(rank))} ${word}
+        ${sm('right', (ALL[word.slice(0,-1)] ? '●' : '') + post)}
+        ${sm('super right', (POS[word] || {}).keys().join('&nbsp;'))}
     </div>`;
 }
 
@@ -69,15 +68,10 @@ handleFind = (type) => {
             : /^[?\-+]/.test(clause) || ALL[clause.replace(/\d/g, x => matches[x|0])];
     })).map(x => x[0]);
     clauses.forEach(clause => {
-        var [, op, arg] = clause.match(/^([?\-+])(\d+)$/) || [];
-        if (!op) return;
-        if (op == '?') {
-            res = res.sort(() => Math.random() - .5) .slice(0, arg | 0);
-            if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
-        } else {
-            var rankOp = op == '-' ? '<' : '>';
-            eval(`res=res.filter(w=>getRank(w)${rankOp}=${arg|0})`);
-        }
+        var [, arg] = clause.match(/^\?(\d+)$/) || [];
+        if (!arg) return;
+        res = res.sort(() => Math.random() - .5) .slice(0, arg | 0);
+        if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
     });
     res.sort((a, b) => a.length - b.length || (sortKey(a) > sortKey(b) ? 1 : -1));
     $("#count").innerHTML = res.length;

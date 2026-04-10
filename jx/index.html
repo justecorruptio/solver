@@ -13,8 +13,8 @@
             font-family: Arial,sans-serif; margin: 0px;
             height: var(--vh, 100vh);
         }
-        small { color: #6666cc; font-size: 10px; }
 
+        small { color: #6666cc; font-size: 10px; }
         .annotation-container {
             position: relative; display: inline-block; pointer-events: none;
         }
@@ -26,12 +26,7 @@
         .annotation { position: absolute; top: 5px; }
         .annotation.left { right: calc(100% + 3px); }
         .annotation.right { left: calc(100% + 3px); }
-        .annotation.rank {
-            right: calc(100% + 3px); top: 1px; color: #f44; font-size: 11px;
-        }
-        .annotation.pos {
-            left: calc(100% + 3px); top: -2px; color: #ccc; font-size: 8px;
-        }
+        .annotation.super { top: -2px; color: #ccc; font-size: 8px; }
 
         .bordered { border: 1px solid #aaa; border-radius: 6px; box-sizing: border-box; }
         input:focus { box-shadow: 0 0 2px #85a; }
@@ -49,10 +44,7 @@
         label { background-color: transparent; color: #000; cursor: pointer; }
         input[type="checkbox"]:checked + label { background-color: #3a3; color: #fff; }
 
-        grid {
-            display: flex; flex-flow: column wrap;
-            width: 100%;
-        }
+        grid { display: flex; flex-flow: column wrap; width: 100%; }
         cell {
             font-size: 16px; margin: 1px 2px; padding: 2px 5px;
             border-radius: 6px; text-align: center;
@@ -95,7 +87,7 @@
         <label for="checkRegex" class="button bordered">/re/</label>
         <input id="input" class="bordered" disabled
             onkeydown="handleInput(event)"
-            placeholder="<re|ulu>:re1..9:[<=>]len:[-+]rank:?limit">
+            placeholder="re|ulu re1..9 <=>len ?limit">
     </div>
     <div class="button-bar">
         <button class="button bordered primary" onclick="handleFind()">Show</button>
