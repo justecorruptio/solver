@@ -14,14 +14,6 @@ ALL = {}; DEFS = {}; POS = {}; RANKS = {};
 
 fetchFile = async (fn, re, cb) => (await (await fetch(fn)).text()).match(re).forEach(cb);
 
-loadHash = window.onhashchange = () => {
-    let [_, type, input] = decodeURIComponent(location.hash).match(/#([UR]),(.*)/) || [];
-    if (!type) return;
-    $('#checkRegex').checked = type == 'R';
-    $('#input').value = input;
-    handleFind();
-};
-
 Promise.all([
     fetchFile('nwl2023.txt', /\w+/g, word => ALL[word.upper()] = true),
     fetchFile('def.txt', /[^\n]+\n/g, line => {
@@ -35,9 +27,7 @@ Promise.all([
         let [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
     }),
-]).then(() => {
-    $('#input').disabled = false;
-}).then(loadHash);
+]).then(() => {$('#input').disabled = false;})
 
 hash = word => word.sort().join('');
 getRank = word => (RANKS[hash(word)] || 99999) / 20000;
@@ -107,7 +97,6 @@ handleFind = (type) => {
     $("#count").innerHTML = res.length;
     $('#answer').innerHTML = output || cell('No solution!');
     $('#input').focus();
-    location.hash = `${isRegexMode?'R':'U'},${input.replace(/ /g, ':')}`;
 };
 
 getCell = ($el, success) => {
