@@ -12,23 +12,23 @@ $$ = x => document.querySelectorAll(x);
 LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 ALL = {}; GRAMS = {}; DEFS = {}; POS = {}; RANKS = {};
 
-fetchFile = async (fn, re, cb) => (await (await fetch(fn)).text()).match(re).forEach(cb);
+fetchFile = async (fn, cb) => (await (await fetch(fn)).text()).match(/[^\n]+/g).forEach(cb);
 
 Promise.all([
-    fetchFile('nwl2023.txt', /\w+/g, word => {
+    fetchFile('nwl2023.txt', word => {
         word = word.upper();
-        var hx = hash(word);
+        let hx = hash(word);
         ALL[word] = true;
-        GRAMS[hx] = [...GRAMS[hx] || [], word];
+        (GRAMS[hx] ||= []).push(word);
     }),
-    fetchFile('def.txt', /[^\n]+\n/g, line => {
+    fetchFile('def.txt', line => {
         let [_, words, def, pos] = line.match(/(.+)\t([ A-Z]+([a-z]+).+)/);
         words.upper().split(' ').forEach(word => {
-            (DEFS[word] = DEFS[word] || []).push(def);
-            (POS[word] = POS[word] || {})[pos] = 1;
+            (DEFS[word] ||= []).push(def);
+            (POS[word] ||= {})[pos] = 1;
         });
     }),
-    fetchFile('ranks.txt', /[^\n]+\n/g, line => {
+    fetchFile('ranks.txt', line => {
         let [hx, rank] = line.split('\t');
         RANKS[hx] = rank | 0;
     }),
