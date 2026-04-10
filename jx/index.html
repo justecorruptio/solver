@@ -1,226 +1,91 @@
 <!DOCTYPE HTML>
-<!--<html manifest="./app-cache.manifest">-->
 <html>
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="apple-touch-icon" href="solver.png" />
-    <link rel="icon" type="image/png" href="solver.png" />
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="solver.png">
+    <link rel="icon" type="image/png" href="solver.png">
     <style>
-        body {
-            font-family: Arial,sans-serif;
-        }
-        h1 {
-            margin: 5px;
-            font-weight: 200;
-        }
-        small {
-            color: #6666cc;
-            font-size: 10px;
-        }
+        body { font-family: Arial,sans-serif; }
+        small { color: #6666cc; font-size: 10px; }
 
         .annotation-container {
-            position: relative;
-            display: inline-block;
-            pointer-events: none;
+            position: relative; display: inline-block; pointer-events: none;
         }
-
         .annotation-container.hidden small,
-        cell.hidden .annotation-container small {
-            display: none;
-        }
-
+        cell.hidden .annotation-container small { display: none; }
         cell:not(.hidden) .annotation-container:not(.hidden) {
-            margin-left: 30px;
-            margin-right: 30px;
+            margin-left: 30px; margin-right: 30px;
         }
-
-        .annotation {
-            position: absolute;
-            top: 5px;
-        }
-
-        .annotation.left {
-            right: calc(100% + 3px);
-        }
-
-        .annotation.right {
-            left: calc(100% + 3px);
-        }
-
+        .annotation { position: absolute; top: 5px; }
+        .annotation.left { right: calc(100% + 3px); }
+        .annotation.right { left: calc(100% + 3px); }
         .annotation.rank {
-            right: calc(100% + 3px);
-            top: 1px;
-            color: #ff4444;
-            font-size: 11px;
+            right: calc(100% + 3px); top: 1px; color: #f44; font-size: 11px;
         }
-
         .annotation.pos {
-            left: calc(100% + 3px);
-            top: -2px;
-            color: #cccccc;
-            font-size: 8px;
+            left: calc(100% + 3px); top: -2px; color: #ccc; font-size: 8px;
         }
 
-        .bordered {
-            border: 1px solid #aaaaaa;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        input:focus {
-            box-shadow: 0 0 2px #8855aa;
-        }
+        .bordered { border: 1px solid #aaa; border-radius: 6px; box-sizing: border-box; }
+        input:focus { box-shadow: 0 0 2px #85a; }
         #input {
-            font-family: inherit;
-            font-size: 16px;
-            text-transform: uppercase;
-            width: calc(100% - 50px);
-            padding: 10px;
+            font-family: inherit; font-size: 16px; text-transform: uppercase;
+            width: calc(100% - 50px); padding: 10px;
         }
-        .input-bar {
-            width: calc(100% - 10px);
-            margin: 3px;
-        }
-        .input-bar {
-        }
-        .button {
-            font-size: 16px;
-            margin: 2px;
-            padding: 5px;
-            cursor: pointer;
-        }
-        .primary {
-            color: white;
-            background-color: #8855aa;
-        }
-        .secondary {
-            color: white;
-            background-color: #aa6e55;
-        }
-        .button:hover {
-            box-shadow: 0 0 2px #8855aa;
-        }
-        input[type="checkbox"] {
-            display: none;
-        }
-        label {
-            background-color: rgba(0, 0, 0, 0);
-            color: #000000;
-            cursor: pointer;
-        }
-        input[type="checkbox"]:checked + label{
-            background-color: #33aa33;
-            color: #FFFFFF;
-        }
+        .input-bar { width: calc(100% - 10px); margin: 3px; }
+        .button { font-size: 16px; margin: 2px; padding: 5px; cursor: pointer; }
+        .primary { color: white; background-color: #85a; }
+        .secondary { color: white; background-color: #a65; }
+        .button:hover { box-shadow: 0 0 2px #85a; }
+        input[type="checkbox"] { display: none; }
+        label { background-color: transparent; color: #000; cursor: pointer; }
+        input[type="checkbox"]:checked + label { background-color: #3a3; color: #fff; }
 
         grid {
-            display: flex;
-            flex-direction: column;
-            flex-flow: column wrap;
-            jusify-content: space-between;
-            width: 100%;
+            display: flex; flex-flow: column wrap;
+            justify-content: space-between; width: 100%;
         }
-
         cell {
-            /*width: calc((100% - 50px)/ 12);*/
-            font-size: 16px;
-            margin-top: 2px;
-            margin-left: 5px;
-            padding: 2px 5px 2px 5px;
-            border-radius: 6px;
-            text-align: center;
+            font-size: 16px; margin-top: 2px; margin-left: 5px;
+            padding: 2px 5px; border-radius: 6px; text-align: center;
         }
-
-        cell.ok {
-            background-color: #00aa00;
-            color: white;
-        }
-
-        cell.err {
-            background-color: #aa0000;
-            color: white;
-        }
-
-        cell.minor {
-            color: #aaaaaa;
-        }
-
-        cell.hidden.blur {
-            filter: blur(5px);
-            color: #444444;
-        }
-
-        cell.hidden.alpha {
-            position: relative;
-        }
-
+        cell.ok { background-color: #0a0; color: white; }
+        cell.err { background-color: #a00; color: white; }
+        cell.minor { color: #aaa; }
+        cell.hidden.blur { filter: blur(5px); color: #444; }
+        cell.hidden.alpha { position: relative; }
         cell.hidden.alpha::after {
-            content: attr(data-hash);
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding-left: 5px;
-            background: white;
+            content: attr(data-hash); position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            padding-left: 5px; background: white;
         }
-
-        cell.got {
-            color: #00aa00;
-        }
-
-        cell.missed {
-            color: #aa0000;
-        }
-
+        cell.got { color: #0a0; }
+        cell.missed { color: #a00; }
         cell.last-got {
-            border: 1px solid #aaaaaa;
-            border-radius: 6px;
-            box-sizing: border-box;
-            padding: 1px 4px 1px 4px;
+            border: 1px solid #aaa; border-radius: 6px;
+            box-sizing: border-box; padding: 1px 4px;
         }
-
-        cell.good {
-            color: #00ff00;
-        }
+        cell.good { color: #0f0; }
 
         overlay {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            width: calc(100% - 20px);
-            height: 80px;
-            background-color: #8855aa;
-            color: #ffffff;
-            padding: 10px;
-            box-sizing: border-box;
-            border-radius: 6px;
-            display: none;
+            position: fixed; bottom: 10px; left: 10px;
+            width: calc(100% - 20px); height: 80px;
+            background-color: #85a; color: #fff; padding: 10px;
+            box-sizing: border-box; border-radius: 6px; display: none;
         }
-
-        #answer {
-            max-height: calc(100vh - 120px);
-        }
-
+        #answer { max-height: calc(100vh - 120px); }
         @media (max-width: 800px) {
             #answer {
-                height: var(--vh, 1vh);
-                width: calc(100vw - 20px);
+                height: var(--vh, 1vh); width: calc(100vw - 20px);
                 overflow-x: auto;
             }
-            html, body {
-                overflow-x: hidden;
-                height: calc(var(--vh, 300px) + 80px);
-            }
-            body {
-                position: relative;
-            }
-            .wide {
-                display: none;
-            }
+            html, body { overflow-x: hidden; height: calc(var(--vh, 300px) + 80px); }
+            body { position: relative; }
+            .wide { display: none; }
         }
 
     </style>
@@ -228,32 +93,22 @@
 
 <body>
     <div class="input-bar">
-        <input type="checkbox" id="checkRegex"></input>
+        <input type="checkbox" id="checkRegex">
         <label for="checkRegex" class="button bordered">/re/</label>
-
-        <input id="input" class="bordered" disabled="disabled"
+        <input id="input" class="bordered" disabled
             onkeydown="handleInput(event)"
-            onfocus="handleFocus(event, 340)"
-            onblur="handleFocus(event, 110)"
-            placeholder="<re|ulu>:re1..9:[<=>]len:[-+]rank:?limit"
-        ></input>
+            onfocus="handleFocus(event,340)" onblur="handleFocus(event,110)"
+            placeholder="<re|ulu>:re1..9:[<=>]len:[-+]rank:?limit">
     </div>
     <button class="button bordered primary" onclick="handleFind()">Show</button>
     <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
     <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
-
-    <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()" checked=checked></input>
+    <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()" checked>
     <label for="checkAnnotate" class="button bordered">🖊️<span class="wide"> Annotate</span></label>
-
-    <button class="button bordered secondary" onclick="handleReveal()">
-        Reveal
-    </button>
+    <button class="button bordered secondary" onclick="handleReveal()">Reveal</button>
     <span id="count"></span>
     <grid id="answer"></grid>
-
     <overlay id="def" onclick="style.display='none'"></overlay>
-
     <script src="solver.js?a=6"></script>
 </body>
-
 </html>
