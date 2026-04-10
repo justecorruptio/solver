@@ -76,16 +76,16 @@
         cell.good { color: #0f0; }
 
         overlay {
-            position: fixed; bottom: 10px; left: 10px;
-            width: calc(100% - 20px); height: 80px;
+            position: fixed; bottom: 20px; left: 20px;
+            width: calc(100% - 40px); height: 80px;
             background-color: #85a; color: #fff; padding: 10px;
-            box-sizing: border-box; border-radius: 6px; display: none;
+            display: none;
         }
         #answer {
-                height: calc(var(--vh, 100vh) - 96px); width: 100dvw;
-                overflow-x: auto;
+            height: calc(var(--vh, 100vh) - 96px); width: 100dvw;
+            overflow-x: auto;
         }
-        @media (max-width: 800px) {.wide { display: none; }}
+        @media (max-width: 800px) { .wide { display: none; } }
 
     </style>
 </head>
@@ -108,7 +108,7 @@
         <span id="count"></span>
     </div>
     <grid id="answer"></grid>
-    <overlay id="def" onclick="style.display='none'"></overlay>
+    <overlay id="def" class="bordered" onclick="style.display='none'"></overlay>
     <script src="solver.js?a=1"></script>
 </body>
 </html>
