@@ -9,7 +9,10 @@
     <link rel="apple-touch-icon" href="solver.png">
     <link rel="icon" type="image/png" href="solver.png">
     <style>
-        body { font-family: Arial,sans-serif; }
+        body {
+            font-family: Arial,sans-serif; margin: 0px;
+            height: var(--vh, 100vh);
+        }
         small { color: #6666cc; font-size: 10px; }
 
         .annotation-container {
@@ -36,7 +39,8 @@
             font-family: inherit; font-size: 16px; text-transform: uppercase;
             width: calc(100% - 50px); padding: 10px;
         }
-        .input-bar { width: calc(100% - 10px); margin: 3px; }
+        .input-bar { width: auto; padding: 8px; height: 40px;}
+        .button-bar { width: auto; padding: 0px 8px 0px 8px; height: 40px;}
         .button { font-size: 16px; margin: 2px; padding: 5px; cursor: pointer; }
         .primary { color: white; background-color: #85a; }
         .secondary { color: white; background-color: #a65; }
@@ -47,7 +51,7 @@
 
         grid {
             display: flex; flex-flow: column wrap;
-            justify-content: space-between; width: 100%;
+            width: 100%;
         }
         cell {
             font-size: 16px; margin-top: 2px; margin-left: 5px;
@@ -77,16 +81,11 @@
             background-color: #85a; color: #fff; padding: 10px;
             box-sizing: border-box; border-radius: 6px; display: none;
         }
-        #answer { max-height: calc(100vh - 120px); }
-        @media (max-width: 800px) {
-            #answer {
-                height: var(--vh, 1vh); width: calc(100vw - 20px);
+        #answer {
+                height: calc(var(--vh, 100vh) - 96px); width: 100dvw;
                 overflow-x: auto;
-            }
-            html, body { overflow-x: hidden; height: calc(var(--vh, 300px) + 80px); }
-            body { position: relative; }
-            .wide { display: none; }
         }
+        @media (max-width: 800px) {.wide { display: none; }}
 
     </style>
 </head>
@@ -97,18 +96,19 @@
         <label for="checkRegex" class="button bordered">/re/</label>
         <input id="input" class="bordered" disabled
             onkeydown="handleInput(event)"
-            onfocus="handleFocus(event,340)" onblur="handleFocus(event,110)"
             placeholder="<re|ulu>:re1..9:[<=>]len:[-+]rank:?limit">
     </div>
-    <button class="button bordered primary" onclick="handleFind()">Show</button>
-    <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
-    <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
-    <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()" checked>
-    <label for="checkAnnotate" class="button bordered">🖊️<span class="wide"> Annotate</span></label>
-    <button class="button bordered secondary" onclick="handleReveal()">Reveal</button>
-    <span id="count"></span>
+    <div class="button-bar">
+        <button class="button bordered primary" onclick="handleFind()">Show</button>
+        <button class="button bordered primary" onclick="handleFind('blur')">Blur</button>
+        <button class="button bordered primary" onclick="handleFind('alpha')">Alpha</button>
+        <input type="checkbox" id="checkAnnotate" onchange="handleAnnotation()" checked>
+        <label for="checkAnnotate" class="button bordered">🖊️<span class="wide"> Annotate</span></label>
+        <button class="button bordered secondary" onclick="handleReveal()">Reveal</button>
+        <span id="count"></span>
+    </div>
     <grid id="answer"></grid>
     <overlay id="def" onclick="style.display='none'"></overlay>
-    <script src="solver.js?a=6"></script>
+    <script src="solver.js?a=1"></script>
 </body>
 </html>

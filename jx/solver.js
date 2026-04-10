@@ -116,9 +116,6 @@ handleInput = (event) => {
 
 handleAnnotation = () => $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
 
-handleFocus = (event, height) =>
-    document.documentElement.style.setProperty('--vh', `${innerHeight - height}px`);
-
 handleReveal = () => $$('cell.hidden').forEach(x => x.classList.remove('hidden').add('missed'));
 
 handleClickCell = (event) => {
@@ -132,3 +129,7 @@ showDef = (word) => {
     $('#def').innerText = (DEFS[word] || []).join('\n') || 'No definition';
     $('#def').style.display = 'block';
 }
+
+window.visualViewport.addEventListener('resize', (event) => {
+    document.documentElement.style.setProperty('--vh', `${event.target.height}px`);
+});
