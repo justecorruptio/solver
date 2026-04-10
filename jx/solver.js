@@ -106,8 +106,9 @@ getCell = ($el, success) => {
 }
 
 handleInput = (event) => {
-    var input = $('#input').value.upper().replace(/^ +| +$/g, '');
+    var input = $('#input').value.upper().trim();
     if (input && event.keyCode == 13) {
+        if (event.shiftKey) { handleFind(); return; }
         if ($el = $(`cell[data-word="${input}"]`)) getCell($el, true);
         else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
         $('#input').value = '';
