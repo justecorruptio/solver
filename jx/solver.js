@@ -28,10 +28,10 @@ Promise.all([
 ]).then(() => {$('#input').disabled = false})
 
 ulu = (pattern) => {
-    let any = /@/.test(pattern),
-        letters = pattern.replace(/[?@]/g, '').sort(),
+    let check_len = /@/.test(pattern) ? ()=>true : l => l == pattern.length || null,
+        letters = pattern.replace(/\W/g, '').sort(),
         regex = RegExp(['^', ...letters, '$'].join('.*'));
-    return (word) => (any || pattern.length == word.length) && word.sort().match(regex) ? [word]: null;
+    return (word) => check_len(word.length) && word.sort().match(regex) && [word];
 }
 
 sm = (cls, text) => `<small class="annotation ${cls}">${text}</small>`;
@@ -65,7 +65,7 @@ handleFind = (type) => {
     ).filter(matches => matches && clauses.every(clause => {
         var [, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
         return op ? eval(`matches[0].length ${op}= ${len}`)
-            : /^[?\-+]/.test(clause) || ALL[clause.replace(/\d/g, x => matches[x|0])];
+            : /^\?/.test(clause) || ALL[clause.replace(/\d/g, x => matches[x|0])];
     })).map(x => x[0]);
     clauses.forEach(clause => {
         var [, arg] = clause.match(/^\?(\d+)$/) || [];
