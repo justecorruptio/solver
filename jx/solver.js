@@ -29,8 +29,7 @@ Promise.all([
 
 ulu = (pattern) => {
     let check_len = /@/.test(pattern) ? ()=>true : l => l == pattern.length || null,
-        letters = pattern.replace(/\W/g, '').sort(),
-        regex = RegExp(['^', ...letters, '$'].join('.*'));
+        regex = RegExp(['^', ...pattern.replace(/\W/g, '').sort(), '$'].join('.*'));
     return (word) => check_len(word.length) && word.sort().match(regex) && [word];
 }
 
@@ -41,14 +40,14 @@ cell = (str, cls, word) => `<cell class="${cls || ''}"
     onclick="handleClickCell(event)">${str}</cell>`;
 
 annotate = (word) => {
-    let hidden = $('#checkAnnotate').checked ? '' : 'hidden',
-        pre = LETTERS.filter(l => ALL[l + word]).join(''),
-        post = LETTERS.filter(l => ALL[word + l]).join(''),
-        rank = (RANKS[word.sort()] || 99999) / 20000;
+    let hook = (a, b) => LETTERS.filter(l => ALL[a + l + b]).join(''),
+        hidden = $('#checkAnnotate').checked ? '' : 'hidden',
+        rank = (RANKS[word.sort()] || 99999) / 20000,
+        dot = w => ALL[w] ? '●' : '';
     return `<div class="annotation-container ${hidden}">
-        ${sm('left', pre + (ALL[word.substring(1)] ? '●' : ''))}
+        ${sm('left', hook('', word) + dot(word.slice(1)))}
         ${sm('super left', '★'.repeat(rank))} ${word}
-        ${sm('right', (ALL[word.slice(0,-1)] ? '●' : '') + post)}
+        ${sm('right', dot(word.slice(0,-1)) + hook(word, ''))}
         ${sm('super right', (POS[word] || {}).keys().join('&nbsp;'))}
     </div>`;
 }
@@ -70,7 +69,7 @@ handleFind = (type) => {
     clauses.forEach(clause => {
         var [, arg] = clause.match(/^\?(\d+)$/) || [];
         if (!arg) return;
-        res = res.sort(() => Math.random() - .5) .slice(0, arg | 0);
+        res = res.sort(() => Math.random() - .5).slice(0, arg | 0);
         if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
     });
     res.sort((a, b) => a.length - b.length || (sortKey(a) > sortKey(b) ? 1 : -1));
