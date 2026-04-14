@@ -53,11 +53,10 @@ handleFind = (type) => {
     var input = $('#input').value = $('#input').value.trim().toUpperCase();
     if (!input) return;
     var isRegexMode = $('#checkRegex').checked,
-        [regex, ...clauses] = input.match(/([^ :]+)/g),
+        [regex, ...clauses] = input.match(/(?<!\?)([^? :][^ :]*)/g),
         wrappedRegex = `^${regex.replace(/@/g,'(.+)')}$`,
-        rand = (clauses.find(c => c[0]=='?')||'').slice(1)|0,
+        rand=input.match(/(?<=\?)\d+/)|0,
         sortKey = w => type == 'alpha' ? w.sort() : w;
-    clauses = clauses.filter(c => c[0] != '?');
     var res = Object.keys(ALL).map(
         isRegexMode ? word => word.match(wrappedRegex) : ulu(regex)
     ).filter(matches => matches && clauses.every(clause => {
