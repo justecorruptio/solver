@@ -54,21 +54,19 @@ handleFind = (type) => {
     if (!input) return;
     var isRegexMode = $('#checkRegex').checked,
         [regex, ...clauses] = input.match(/([^ :]+)/g),
-        wrappedRegex = `^(?:${regex.replace(/@/g,'(.+)')})$`,
-        sortKey = type == 'alpha' ? w => w.sort() : w => w;
+        wrappedRegex = `^${regex.replace(/@/g,'(.+)')}$`,
+        rand = (clauses.find(c => c[0]=='?')||'').slice(1)|0,
+        sortKey = w => type == 'alpha' ? w.sort() : w;
+    clauses = clauses.filter(c => c[0] != '?');
     var res = Object.keys(ALL).map(
         isRegexMode ? word => word.match(wrappedRegex) : ulu(regex)
     ).filter(matches => matches && clauses.every(clause => {
         var [, op, len] = clause.match(/^([<>=])(\d+)$/) || [];
         return op ? eval(`matches[0].length ${op}= ${len}`)
-            : /^\?/.test(clause) || ALL[clause.replace(/\d/g, x => matches[x|0])];
+            : ALL[clause.replace(/\d/g, x => matches[x|0])];
     })).map(x => x[0]);
-    clauses.forEach(clause => {
-        var [, arg] = clause.match(/^\?(\d+)$/) || [];
-        if (!arg) return;
-        res = res.sort(() => Math.random() - .5).slice(0, arg | 0);
-        if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
-    });
+    if (rand) res = res.sort(() => Math.random() - .5).slice(0, rand);
+    if (!isRegexMode) res = [...new Set(res.flatMap(w => GRAMS[w.sort()]))];
     res.sort((a, b) => a.length - b.length || (sortKey(a) > sortKey(b) ? 1 : -1));
     $("#count").innerHTML = res.length;
     $('#answer').innerHTML = res.map(
@@ -77,9 +75,9 @@ handleFind = (type) => {
     $('#input').focus();
 };
 
-getCell = (el, success) => {
+getCell = (el, cls) => {
     $$('.last-got').forEach(x => x.classList.remove('last-got'));
-    el.classList.replace('hidden', success ? 'got' : 'missed');
+    el.classList.replace('hidden', cls);
     el.classList.add('last-got');
     $("#count").innerHTML = $$('cell.hidden').length;
 }
@@ -89,7 +87,7 @@ handleInput = ({keyCode, shiftKey}) => {
     if (!input || keyCode != 13) return;
     if (shiftKey) return handleFind();
     var el = $(`cell[data-word="${input}"]`);
-    if (el) getCell(el, true);
+    if (el) getCell(el, 'got');
     else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
     $('#input').value = '';
 };
@@ -99,7 +97,7 @@ handleReveal = () => $$('cell.hidden').forEach(x => x.classList.replace('hidden'
 
 handleClickCell = ({target, target: {dataset: {word}}}) => {
     if (target.matches('.err')) return target.remove();
-    if (target.matches('.hidden')) return getCell(target, false);
+    if (target.matches('.hidden')) return getCell(target, 'missed');
     if (!word) return;
     $('#def').innerText = (DEFS[word]||[]).join('\n') || 'No definition';
     $('#def').style.display = 'block';
