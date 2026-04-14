@@ -31,7 +31,7 @@ ulu = (pattern) => {
     let any = /@/.test(pattern),
         letters = pattern.replace(/[?@]/g, '').sort(),
         regex = RegExp(['^', ...letters, '$'].join('.*'));
-    return (word) => (any || pattern.length == word.length) && word.sort().match(regex);
+    return (word) => (any || pattern.length == word.length) && word.sort().match(regex) ? [word]: null;
 }
 
 sm = (cls, text) => `<small class="annotation ${cls}">${text}</small>`;
@@ -90,13 +90,12 @@ getCell = (el, success) => {
 
 handleInput = ({keyCode, shiftKey}) => {
     var input = $('#input').value.upper().trim();
-    if (input && keyCode == 13) {
-        if (shiftKey) return handleFind();
-        var el = $(`cell[data-word="${input}"]`);
-        if (el) getCell(el, true);
-        else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
-        $('#input').value = '';
-    }
+    if (!input || keyCode != 13) return;
+    if (shiftKey) return handleFind();
+    var el = $(`cell[data-word="${input}"]`);
+    if (el) getCell(el, true);
+    else $('#answer').innerHTML += cell(input, ALL[input]?'err good':'err');
+    $('#input').value = '';
 };
 
 handleAnnotation = () => $$('.annotation-container').forEach(x => x.classList.toggle('hidden'));
@@ -111,6 +110,5 @@ handleClickCell = ({target, target: {dataset: {word}}}) => {
     }
 }
 
-visualViewport.addEventListener('resize', (event) => {
-    document.documentElement.style.setProperty('--vh', `${event.target.height}px`);
-});
+visualViewport.onresize = ({target: {height}}) =>
+    document.documentElement.style.setProperty('--vh', height + 'px');
